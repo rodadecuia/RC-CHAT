@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Backend 1: Node.js para comunicação em tempo real
+  backend-node:
+    build:
+      context: ./backend-node
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Expõe a porta do container para a máquina host
+    volumes:
+      - ./backend-node:/app # Monta o código local para desenvolvimento
+    networks:
+      - app-network
+
+  # Backend 2: Python para IA e automações
+  backend-python:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend-python:/app
+    networks:
+      - app-network
+
+  # Frontend: React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend/.env # Carrega as variáveis de ambiente deste arquivo
+    ports:
+      - "5173:5173" # Porta padrão do Vite
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Evita que a node_modules local sobrescreva a do container
+    networks:
+      - app-network
+
+  # Banco de dados principal
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rc_chat_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Cache e Filas
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
