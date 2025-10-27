@@ -11,9 +11,9 @@ import ChatPage from './pages/ChatPage';
 import DashboardPage from './pages/DashboardPage';
 import AccountsPage from './pages/admin/AccountsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import ConnectionsPage from './pages/admin/ConnectionsPage'; // Importa a nova página
+import ConnectionsPage from './pages/admin/ConnectionsPage';
 
-function parseJwt(token) { try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; } }
+export function parseJwt(token) { try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; } }
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('authToken'));
@@ -42,7 +42,7 @@ export default function App() {
                 <Route index element={<Navigate to="dashboard" />} />
                 <Route path="dashboard" element={<AdminDashboardPage />} />
                 <Route path="accounts" element={<AccountsPage />} />
-                <Route path="connections" element={<ConnectionsPage />} /> {/* Rota Adicionada */}
+                <Route path="connections" element={<ConnectionsPage />} />
               </Route>
             )}
           </Route>
