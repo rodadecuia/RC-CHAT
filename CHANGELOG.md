@@ -4,6 +4,39 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.0] - 2025-10-27
+
+### Added
+- **Gestor de Conexões (CRUD Completo)**:
+  - Criação da tabela `connections` no banco de dados para armazenar configurações de canais (WhatsApp, Telegram, etc.).
+  - Implementação de endpoints CRUD (`GET`, `POST`, `PUT`, `DELETE`) para gerenciar conexões via `backend-node`.
+  - Criação da página `ConnectionsPage.jsx` no frontend para listar, adicionar, editar e deletar conexões.
+  - Modal de formulário (`ConnectionFormModal.jsx`) para configuração de conexões, incluindo campos específicos para `WHATSAPP_QRCODE`.
+  - Integração com **Evolution API** via `backend-python`:
+    - Endpoints para gerar QR Code (`/api/evolution/connections/:instanceName/qrcode`).
+    - Endpoints para verificar status da conexão (`/api/evolution/connections/:instanceName/status`).
+    - Endpoint para envio de mensagens (`/api/evolution/send-message`).
+- **Mensageria Assíncrona com RabbitMQ**:
+  - Adição do serviço `rabbitmq` ao `docker-compose.yml`.
+  - Configuração de variáveis de ambiente para RabbitMQ (`RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`).
+  - `backend-python` configurado como **produtor** de mensagens:
+    - Webhooks da Evolution API (`/api/evolution/webhook`) agora publicam mensagens na fila `evolution_webhooks`.
+  - `backend-node` configurado como **consumidor** de mensagens:
+    - Consome da fila `evolution_webhooks`, processa a mensagem, salva no DB e emite via Socket.io.
+  - `backend-node` configurado como **produtor** de mensagens de saída:
+    - Mensagens enviadas pelo atendente via Socket.io são publicadas na fila `outgoing_messages`.
+  - `backend-python` configurado como **consumidor** de mensagens de saída:
+    - Consome da fila `outgoing_messages` e envia a mensagem para a Evolution API.
+
+### Changed
+- **Ordem de Inicialização de Serviços**: Adição de `healthcheck` para `postgres` e `rabbitmq` no `docker-compose.yml`, garantindo que os backends esperem pela prontidão desses serviços.
+- **Refatoração do Backend Python**: Modularização dos endpoints do `main.py` para `routers/evolution.py`, seguindo o padrão de separação de responsabilidades.
+
+### Fixed
+- **Erro de Sintaxe no Frontend**: Corrigido `Unexpected backslash in JSX element` no `ConnectionFormModal.jsx`.
+
+---
+
 ## [0.2.0] - 2025-10-27
 
 ### Added

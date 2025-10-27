@@ -12,27 +12,33 @@ A plataforma é dividida nos seguintes serviços, orquestrados com Docker:
   - **Estrutura**: O código-fonte do frontend está organizado em `src/components`, `src/layouts`, e `src/pages` para máxima manutenibilidade.
 
 - **Backend 1 (Comunicação em Tempo Real)**
-  - **Tecnologia**: Node.js, Express, Socket.io, PostgreSQL
-  - **Responsabilidade**: Gerenciar conexões WebSocket, autenticação, lógica de chat, e servir a API REST principal. As rotas da API são modularizadas em `routes/api.js`.
+  - **Tecnologia**: Node.js, Express, Socket.io, PostgreSQL, RabbitMQ
+  - **Responsabilidade**: Gerenciar conexões WebSocket, autenticação, lógica de chat, e servir a API REST principal. Atua como consumidor de webhooks externos (via RabbitMQ) e produtor de mensagens de saída para APIs externas (via RabbitMQ).
 
-- **Backend 2 (Inteligência e Automações)**
-  - **Tecnologia**: Python, FastAPI
-  - **Responsabilidade**: (Planejado) Lidar com processamento de IA, análise de sentimentos, e automações complexas.
+- **Backend 2 (Integração com APIs Externas e Automações)**
+  - **Tecnologia**: Python, FastAPI, httpx, pika
+  - **Responsabilidade**: Interagir com APIs externas (ex: Evolution API para WhatsApp). Atua como produtor de webhooks (para RabbitMQ) e consumidor de mensagens de saída (para RabbitMQ).
 
 - **Banco de Dados e Cache**
   - **Tecnologias**: PostgreSQL, Redis
   - **Responsabilidade**: Armazenar dados persistentes e gerenciar cache/filas.
 
+- **Mensageria**
+  - **Tecnologia**: RabbitMQ
+  - **Responsabilidade**: Desacoplar a comunicação entre os backends, garantindo resiliência e escalabilidade na troca de mensagens.
+
 ## Funcionalidades Implementadas
 
 - **Autenticação**: Sistema de login com JWT e verificação de senha com `bcrypt`.
-- **Painel de Atendimento**: Interface de chat em tempo real com lista de conversas e histórico de mensagens.
-- **Multi-tenancy**: Isolamento de dados por empresa usando `company_id` e salas do Socket.io.
-- **Notificações em Tempo Real**: Atualização da UI para novas mensagens e criação de novos chats via webhook.
+- **Painel de Atendimento**: Interface de chat em tempo real com histórico de mensagens, identificação de remetente e timestamps.
+- **Multi-tenancy**: Isolamento de dados por empresa.
+- **Notificações em Tempo Real**: Atualização da UI para novas mensagens e conversas.
 - **Transferência de Chats**: Funcionalidade para um atendente transferir uma conversa para outro.
-- **Área Administrativa**: Uma seção separada para administradores com:
-  - Proteção de rotas baseada em função (`role`).
-  - **Gestão de Contas**: Visualização de empresas e seus respectivos usuários.
+- **Área Administrativa**: Seção protegida para administradores com:
+  - **Gestão de Contas**: Visualização de empresas e seus usuários.
+  - **Gestor de Conexões**: CRUD completo para gerenciar canais de comunicação (WhatsApp QR Code, Telegram, etc.).
+    - Geração e exibição de QR Code para conexões WhatsApp (via Evolution API).
+    - Verificação de status de conexão.
 - **Roteamento Profissional**: Navegação completa no frontend usando React Router com layouts aninhados.
 
 ## Como Executar o Projeto
@@ -41,7 +47,7 @@ O único pré-requisito é ter o **Docker** e o **Docker Compose** instalados.
 
 ### 1. Configuração do Ambiente
 
-Crie um arquivo `.env` na raiz do projeto. Ele é a fonte única de verdade para as configurações de infraestrutura.
+Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
 
 ```
 # Configurações do Banco de Dados PostgreSQL
@@ -53,6 +59,16 @@ POSTGRES_PORT=5432
 
 # Segredo para assinar os JSON Web Tokens
 JWT_SECRET=seu_segredo_jwt_super_aleatorio
+
+# Configurações da Evolution API
+EVOLUTION_API_URL=http://localhost:8080 # Exemplo: URL da sua instância da Evolution API
+EVOLUTION_API_KEY=sua_chave_de_api_da_evolution # Chave de API para autenticação
+
+# Configurações do RabbitMQ
+RABBITMQ_HOST=rabbitmq
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
 ```
 
 Crie um segundo arquivo de ambiente em `frontend/.env` para as variáveis de build do Vite:
@@ -73,6 +89,7 @@ docker-compose up --build
 
 - **Frontend**: `http://localhost:5173`
 - **Backend API**: `http://localhost:3000`
+- **RabbitMQ Management**: `http://localhost:15672` (usuário/senha: `guest`/`guest`)
 
 ### 4. Credenciais de Teste
 

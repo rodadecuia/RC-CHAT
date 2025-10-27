@@ -1,7 +1,10 @@
 import os
 import httpx
-from fastapi import FastAPI, APIRouter, Response, HTTPException, status, Request
-from pydantic import BaseModel
+import pika
+import json
+from fastapi import FastAPI
+
+from routers.evolution import create_evolution_router # Importação corrigida
 
 app = FastAPI()
 
@@ -12,69 +15,66 @@ EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
 if not EVOLUTION_API_URL or not EVOLUTION_API_KEY:
     raise ValueError("EVOLUTION_API_URL e EVOLUTION_API_KEY devem ser definidos nas variáveis de ambiente.")
 
-# Cliente HTTP para fazer requisições assíncronas
+# --- Configurações do RabbitMQ ---
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", 5672))
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD")
+
+if not all([RABBITMQ_HOST, RABBITMQ_USER, RABBITMQ_PASSWORD]):
+    raise ValueError("Variáveis de ambiente do RabbitMQ não configuradas corretamente.")
+
+# Cliente HTTP para fazer requisições assíncronas (compartilhado)
 http_client = httpx.AsyncClient()
 
-evolution_router = APIRouter(prefix="/api/evolution")
+# --- Conexão RabbitMQ ---
+connection = None
+channel = None
 
-# --- Modelos Pydantic para Webhook ---
-class WebhookMessage(BaseModel):
-    instance: str
-    data: dict
-    # Adicione outros campos que a Evolution API envia no webhook
-
-# --- Endpoints da Evolution API ---
-
-@evolution_router.get("/connections/{instance_name}/qrcode")
-async def get_qrcode(instance_name: str):
-    headers = {"apikey": EVOLUTION_API_KEY}
-    url = f"{EVOLUTION_API_URL}/instance/connectionqr/{instance_name}"
-    
+def connect_rabbitmq():
+    global connection, channel
     try:
-        response = await http_client.get(url, headers=headers, timeout=30.0)
-        response.raise_for_status() # Levanta HTTPException para status de erro (4xx, 5xx)
-        
-        # A Evolution API retorna um JSON com o QR Code em base64 ou uma URL
-        data = response.json()
-        if data.get("base64"):
-            # Retorna a imagem base64 diretamente
-            return Response(content=data["base64"], media_type="image/png")
-        elif data.get("qrcode"): # Algumas versões/endpoints podem retornar a URL do QR
-            # Se for uma URL, o frontend precisará buscar a imagem de lá
-            return {"qrcode_url": data["qrcode"]}
-        else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR Code não encontrado ou formato inesperado.")
+        credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT, credentials=credentials))
+        channel = connection.channel()
+        channel.queue_declare(queue='evolution_webhooks', durable=True)
+        channel.queue_declare(queue='outgoing_messages', durable=True)
+        print("Conectado ao RabbitMQ com sucesso.")
+    except pika.exceptions.AMQPConnectionError as e:
+        print(f"Erro ao conectar ao RabbitMQ: {e}")
 
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=f"Erro da Evolution API: {e.response.text}")
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro de rede ao conectar à Evolution API: {e}")
+@app.on_event("startup")
+async def startup_event():
+    connect_rabbitmq()
 
-@evolution_router.get("/connections/{instance_name}/status")
-async def get_connection_status(instance_name: str):
-    headers = {"apikey": EVOLUTION_API_KEY}
-    url = f"{EVOLUTION_API_URL}/instance/connectionState/{instance_name}"
+@app.on_event("shutdown")
+async def shutdown_event():
+    if connection:
+        connection.close()
+        print("Conexão RabbitMQ fechada.")
 
-    try:
-        response = await http_client.get(url, headers=headers, timeout=10.0)
-        response.raise_for_status()
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=f"Erro da Evolution API: {e.response.text}")
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro de rede ao conectar à Evolution API: {e}")
+def publish_message(queue_name: str, message: dict):
+    if channel:
+        channel.basic_publish(
+            exchange='',
+            routing_key=queue_name,
+            body=json.dumps(message),
+            properties=pika.BasicProperties(
+                delivery_mode=pika.DeliveryMode.Persistent
+            )
+        )
+        print(f"Mensagem publicada na fila {queue_name}: {message}")
+    else:
+        print("Erro: Canal RabbitMQ não está disponível.")
 
-@evolution_router.post("/webhook")
-async def evolution_webhook(request: Request):
-    # Este endpoint receberá eventos da Evolution API
-    # Por enquanto, apenas loga o que chega
-    payload = await request.json()
-    print(f"Webhook da Evolution API recebido: {payload}")
-    # TODO: Processar o payload e encaminhar para o backend-node
-    return {"status": "ok"}
-
-# Inclui o router da Evolution API na aplicação principal
-app.include_router(evolution_router)
+# --- Inclui o router da Evolution API na aplicação principal ---
+evolution_router = create_evolution_router(
+    http_client=http_client,
+    evolution_api_url=EVOLUTION_API_URL,
+    evolution_api_key=EVOLUTION_API_KEY,
+    publish_message_func=publish_message
+)
+app.include_router(evolution_router, prefix="/api/evolution")
 
 @app.get("/")
 def read_root():
