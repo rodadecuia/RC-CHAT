@@ -4,7 +4,7 @@ const { Server } = require("socket.io");
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const createApiRouter = require('./routes/api'); // Importa o nosso novo router
+const createApiRouter = require('./routes');
 
 // --- Configurações ---
 const pool = new Pool({
@@ -29,11 +29,9 @@ const PORT = process.env.PORT || 3000;
 const io = new Server(server, { cors: corsOptions });
 
 // --- Rotas da API ---
-// O router é criado passando as dependências necessárias
 const apiRouter = createApiRouter(pool, io, JWT_SECRET);
-app.use('/api', apiRouter); // Usa o router para todas as rotas que começam com /api
+app.use('/api', apiRouter);
 app.get('/', (req, res) => res.send('<h1>Backend Node Works!</h1>'));
-
 
 // --- Middleware de Autenticação do Socket.io ---
 io.use((socket, next) => {
@@ -57,7 +55,14 @@ io.on('connection', (socket) => {
     try {
       const chatCheck = await pool.query('SELECT id FROM chats WHERE id = $1 AND company_id = $2', [chatId, companyId]);
       if (chatCheck.rowCount === 0) return;
-      const history = await pool.query('SELECT * FROM messages WHERE chat_id = $1 ORDER BY created_at ASC', [chatId]);
+      const historyQuery = `
+        SELECT m.*, u.name as agent_name 
+        FROM messages m
+        LEFT JOIN users u ON m.sender_id = u.id::text AND m.sender_type = 'agent'
+        WHERE m.chat_id = $1
+        ORDER BY m.created_at ASC
+      `;
+      const history = await pool.query(historyQuery, [chatId]);
       socket.emit('chat_history', history.rows);
     } catch (error) { console.error('Error fetching specific chat history:', error); }
   });
@@ -67,7 +72,17 @@ io.on('connection', (socket) => {
     try {
       const chatCheck = await pool.query('SELECT id FROM chats WHERE id = $1 AND company_id = $2', [chatId, companyId]);
       if (chatCheck.rowCount === 0) return;
-      const result = await pool.query('INSERT INTO messages (chat_id, sender_id, sender_type, content) VALUES ($1, $2, $3, $4) RETURNING *', [chatId, userId, 'agent', content]);
+      const insertQuery = `
+        WITH new_message AS (
+          INSERT INTO messages (chat_id, sender_id, sender_type, content) 
+          VALUES ($1, $2, 'agent', $3) 
+          RETURNING *
+        )
+        SELECT nm.*, u.name as agent_name 
+        FROM new_message nm
+        LEFT JOIN users u ON nm.sender_id = u.id::text
+      `;
+      const result = await pool.query(insertQuery, [chatId, userId, content]);
       const newMessage = result.rows[0];
       io.to(roomName).emit('chat_message', newMessage);
     } catch (error) { console.error('Error saving message:', error); }

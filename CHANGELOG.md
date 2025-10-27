@@ -4,46 +4,46 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.0] - 2025-10-27
+
+### Added
+- **Área Administrativa**: 
+  - Implementação de uma seção `/admin` no frontend, protegida por função de usuário (`role`).
+  - Adição de um layout aninhado com um sub-menu para as páginas de administração.
+  - Criação da página de **Gestão de Contas** para visualizar empresas e seus respectivos usuários.
+- **Endpoints de Administração**: 
+  - Adição de um middleware `isAdmin` no backend para proteger rotas de administração.
+  - Criação dos endpoints `GET /api/admin/companies` e `GET /api/admin/companies/:companyId/users`.
+- **Paleta de Cores Customizada**: Adicionada a paleta "Roda de Cuia" ao `tailwind.config.js` e aplicada em toda a interface para uma identidade visual única.
+
+### Changed
+- **Arquitetura do Frontend**: Refatoração massiva do frontend. O arquivo `main.jsx` foi simplificado e todos os componentes foram separados em uma estrutura de pastas profissional (`components`, `layouts`, `pages`). O roteamento agora é gerenciado pelo componente `App.jsx`.
+
+---
+
 ## [0.1.0] - 2025-10-27
 
 ### Added
-- **Estrutura Inicial do Projeto**: Criação da arquitetura de microsserviços com Docker, incluindo `frontend` (React), `backend-node` (Node.js), `backend-python` (Python), `postgres` e `redis`.
-- **Comunicação em Tempo Real**: Implementação da conexão base com Socket.io entre o frontend e o backend-node.
-- **Persistência de Dados**: Adição do banco de dados PostgreSQL e da biblioteca `pg` ao backend. Mensagens agora são salvas no banco.
-- **Carregamento de Histórico**: Implementação da lógica para carregar o histórico de mensagens de um chat ao selecioná-lo.
-- **Sistema de Autenticação (JWT)**: 
-  - Adição das bibliotecas `jsonwebtoken` e `bcryptjs`.
-  - Criação do endpoint `POST /api/login` para autenticação de usuários.
-  - Implementação de middleware de autenticação para rotas Express e conexões Socket.io.
-- **Multi-tenancy (Isolamento de Empresas)**:
-  - Adição de `company_id` às tabelas principais do banco de dados.
-  - Uso de salas (rooms) do Socket.io para garantir que a comunicação de uma empresa seja isolada das outras.
-  - Queries de banco de dados agora filtram os resultados pelo `companyId` do usuário autenticado.
-- **Interface Moderna com Tailwind CSS**:
-  - Adição e configuração do Tailwind CSS no projeto frontend.
-  - Refatoração completa da UI para um design moderno com tema escuro, layout flexbox e componentes estilizados.
-- **Simulação de Mensagens Externas (Webhook)**:
-  - Criação do endpoint `POST /api/webhook/incoming` para simular o recebimento de mensagens de clientes.
-  - Implementação da lógica de "Find or Create Chat" no backend.
-  - Adição de notificações em tempo real na UI para novas conversas.
-- **Transferência de Chats**:
-  - Adição dos endpoints `GET /api/users` e `POST /api/chats/:chatId/transfer`.
-  - Implementação da UI (modal) para permitir que um atendente transfira um chat para outro.
-  - Adição de mensagens de sistema para registrar a transferência.
-- **Roteamento no Frontend (React Router)**:
-  - Adição da biblioteca `react-router-dom`.
-  - Criação de um layout persistente com menu lateral para navegação entre diferentes seções (Conversas, Dashboard, etc.).
+- **Estrutura Inicial do Projeto**: Criação da arquitetura de microsserviços com Docker.
+- **Comunicação em Tempo Real**: Implementação da conexão base com Socket.io.
+- **Persistência de Dados**: Adição do banco de dados PostgreSQL.
+- **Carregamento de Histórico**: Implementação da lógica para carregar o histórico de mensagens.
+- **Sistema de Autenticação (JWT)**: Criação do endpoint de login e middleware de autenticação.
+- **Multi-tenancy (Isolamento de Empresas)**: Uso de salas do Socket.io e filtragem de queries.
+- **Interface Moderna com Tailwind CSS**: Refatoração da UI para um design moderno.
+- **Simulação de Mensagens Externas (Webhook)**: Criação do endpoint de webhook para novas mensagens.
+- **Transferência de Chats**: Implementação da funcionalidade de transferência de chats.
+- **Roteamento no Frontend (React Router)**: Adição da biblioteca e criação de layout com menu.
 
 ### Changed
-- **Arquitetura do Backend**: Refatoração do `index.js` do backend-node, movendo toda a lógica de rotas HTTP para um arquivo modular em `routes/api.js` para melhor organização e escalabilidade.
-- **Arquitetura do Frontend**: Refatoração do `main.jsx` de um componente único para uma Single-Page Application (SPA) com múltiplas rotas e layout persistente.
-- **Gestão de Configuração**: Centralização de todas as configurações de infraestrutura (credenciais de DB, segredos JWT) em um único arquivo `.env` na raiz do projeto, consumido pelo `docker-compose.yml`.
+- **Arquitetura do Backend**: Refatoração do `index.js` do backend, movendo rotas para `routes/api.js`.
+- **Gestão de Configuração**: Centralização de configurações em um arquivo `.env` raiz.
 
 ### Fixed
-- **Dependências de Desenvolvimento**: Corrigido o problema `nodemon: not found` ao garantir que `devDependencies` sejam instaladas no ambiente Docker.
-- **CORS (Cross-Origin Resource Sharing)**: Resolvido o erro `Failed to fetch` na tela de login ao adicionar e configurar o middleware `cors` no servidor Express.
-- **Inicialização do Banco de Dados**: Corrigido múltiplos erros que impediam a criação dos usuários de teste, incluindo erros de sintaxe SQL e hashes de senha inválidos no `init.sql`.
+- **Dependências de Desenvolvimento**: Corrigido o problema `nodemon: not found`.
+- **CORS (Cross-Origin Resource Sharing)**: Resolvido o erro `Failed to fetch` na tela de login.
+- **Inicialização do Banco de Dados**: Corrigido múltiplos erros no `init.sql`.
 
 ### Security
-- **Senhas**: Implementada a verificação de senhas usando `bcrypt.compare`, substituindo a lógica de login que aceitava qualquer senha.
+- **Senhas**: Implementada a verificação de senhas usando `bcrypt.compare`.
 - **Proteção de Rotas**: Todas as rotas de API e conexões de socket agora exigem um token JWT válido.

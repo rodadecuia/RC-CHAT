@@ -13,7 +13,6 @@ services:
       - /app/node_modules
     networks:
       - app-network
-    # As variáveis são lidas do arquivo .env na raiz do projeto
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -21,6 +20,8 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       JWT_SECRET: ${JWT_SECRET}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
 
   # Backend 2: Python para IA e automações
   backend-python:
@@ -33,6 +34,11 @@ services:
       - ./backend-python:/app
     networks:
       - app-network
+    environment:
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
 
   # Frontend: React App
   frontend:
@@ -40,7 +46,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     env_file:
-      - ./frontend/.env # Este .env é específico para o build do Vite
+      - ./frontend/.env
     ports:
       - "5173:5173"
     volumes:
@@ -52,7 +58,6 @@ services:
   # Banco de dados principal
   postgres:
     image: postgres:16-alpine
-    # As variáveis também são lidas do arquivo .env raiz
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -61,7 +66,6 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Monta o script de inicialização no diretório correto do container
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
@@ -73,6 +77,18 @@ services:
       - "6379:6379"
     networks:
       - app-network
+
+  # Mensageria
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672" # Porta para comunicação AMQP
+      - "15672:15672" # Porta para a interface de gerenciamento (Web UI)
+    networks:
+      - app-network
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 networks:
   app-network:

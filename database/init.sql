@@ -41,6 +41,18 @@ CREATE TABLE messages (
     CONSTRAINT fk_chat FOREIGN KEY(chat_id) REFERENCES chats(id) ON DELETE CASCADE
 );
 
+-- NOVA TABELA: Para gerenciar as conexões (canais)
+CREATE TABLE connections (
+    id SERIAL PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    channel_type VARCHAR(50) NOT NULL, -- 'WHATSAPP', 'TELEGRAM', etc.
+    credentials JSONB, -- Armazena tokens, URLs de webhook, etc.
+    status VARCHAR(50) NOT NULL DEFAULT 'DISCONNECTED', -- 'CONNECTED', 'DISCONNECTED', 'ERROR'
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT fk_company FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE CASCADE
+);
+
 -- Adicionar dados de exemplo
 INSERT INTO companies (name) VALUES ('Empresa Teste');
 
@@ -52,3 +64,6 @@ INSERT INTO users (company_id, name, email, password_hash, role) VALUES (1, 'Ate
 INSERT INTO chats (company_id, customer_name, status) VALUES (1, 'Cliente Teste 1', 'open');
 INSERT INTO messages (chat_id, sender_id, sender_type, content) VALUES (1, 'customer-123', 'customer', 'Olá, preciso de ajuda.');
 INSERT INTO messages (chat_id, sender_id, sender_type, content) VALUES (1, '2', 'agent', 'Olá! Como posso ajudar?');
+
+-- Adicionar uma conexão de exemplo
+INSERT INTO connections (company_id, name, channel_type, status, credentials) VALUES (1, 'WhatsApp Principal', 'WHATSAPP', 'CONNECTED', '{"instance_name": "wpp_main", "token": "exemplo_de_token_abc123"}');
