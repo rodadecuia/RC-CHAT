@@ -7,11 +7,20 @@ services:
       context: ./backend-node
       dockerfile: Dockerfile
     ports:
-      - "3000:3000" # Expõe a porta do container para a máquina host
+      - "3000:3000"
     volumes:
-      - ./backend-node:/app # Monta o código local para desenvolvimento
+      - ./backend-node:/app
+      - /app/node_modules
     networks:
       - app-network
+    # As variáveis são lidas do arquivo .env na raiz do projeto
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      JWT_SECRET: ${JWT_SECRET}
 
   # Backend 2: Python para IA e automações
   backend-python:
@@ -31,26 +40,29 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     env_file:
-      - ./frontend/.env # Carrega as variáveis de ambiente deste arquivo
+      - ./frontend/.env # Este .env é específico para o build do Vite
     ports:
-      - "5173:5173" # Porta padrão do Vite
+      - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Evita que a node_modules local sobrescreva a do container
+      - /app/node_modules
     networks:
       - app-network
 
   # Banco de dados principal
   postgres:
     image: postgres:16-alpine
+    # As variáveis também são lidas do arquivo .env raiz
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: rc_chat_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Monta o script de inicialização no diretório correto do container
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
