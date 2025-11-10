@@ -1,5 +1,5 @@
 {
-  "name": "ticketz-frontend",
+  "name": "rc-chat-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -60,7 +60,6 @@
     "uuid": "^9.0.1",
     "validations-br": "^1.4.0",
     "vcard-parser": "^1.0.0",
-    "wavoip-api": "https://github.com/ticketz-oss/wavoip-api#nossl-error",
     "yup": "^1.4.0"
   },
   "scripts": {
