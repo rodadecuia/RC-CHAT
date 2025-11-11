@@ -52,7 +52,7 @@ Aqui estão alguns exemplos para os cenários mais comuns.
 Esta é a instalação recomendada para a maioria dos usuários. Ela usa a imagem `latest` (estável) do registro do GitHub (GHCR).
 
 ```sh
-curl -sSL ... | sudo bash -s rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s rc-chat.meudominio.com admin@meudominio.com
 ```
 
 #### 2. Instalação da Versão Beta
@@ -60,7 +60,7 @@ curl -sSL ... | sudo bash -s rc-chat.meudominio.com admin@meudominio.com
 Para testar as funcionalidades mais recentes que ainda estão em desenvolvimento.
 
 ```sh
-curl -sSL ... | sudo bash -s --beta rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s --beta rc-chat.meudominio.com admin@meudominio.com
 ```
 
 #### 3. Instalação Usando o Docker Hub
@@ -68,7 +68,7 @@ curl -sSL ... | sudo bash -s --beta rc-chat.meudominio.com admin@meudominio.com
 Caso o registro do GitHub (GHCR) esteja indisponível ou você prefira usar o Docker Hub.
 
 ```sh
-curl -sSL ... | sudo bash -s --dockerhub rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s --dockerhub rc-chat.meudominio.com admin@meudominio.com
 ```
 
 #### 4. Instalação da Versão Beta a partir do Docker Hub
@@ -76,7 +76,7 @@ curl -sSL ... | sudo bash -s --dockerhub rc-chat.meudominio.com admin@meudominio
 Você pode combinar as flags para cenários mais específicos.
 
 ```sh
-curl -sSL ... | sudo bash -s --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
 ```
 
 ### O que o Script Faz?
