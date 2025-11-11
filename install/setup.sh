@@ -112,6 +112,18 @@ CURFOLDER=${PWD}
 # Passo 2: Instala o docker / apenas se já não tiver instalado
 which docker > /dev/null || curl -sSL https://get.docker.com | sh
 
+# Passo 2.1: Autenticação no GHCR
+# ATENÇÃO: O token abaixo concede acesso para baixar pacotes. NÃO COMPARTILHE ESTE ARQUIVO.
+GH_USER="rodadecuia"
+GH_PAT="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"
+
+echo "Autenticando no ghcr.io..."
+echo "$GH_PAT" | docker login ghcr.io -u "$GH_USER" --password-stdin
+if [ $? -gt 0 ] ; then
+    echored "Falha no login do Docker. Verifique seu usuário e PAT."
+    exit 1
+fi
+
 # Passo 3: Baixa o projeto e entra na pasta
 # CORREÇÃO: Clona o repositório RC-CHAT no diretório 'rc-chat'
 [ -d rc-chat ] || git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat
