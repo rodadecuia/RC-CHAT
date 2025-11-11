@@ -2,8 +2,8 @@
 
 # Função para mostrar a mensagem de uso
 show_usage() {
-    echo -e     "Uso: \n\n      curl -sSL https://get.ticke.tz | sudo bash -s [-b <branchname>] <frontend_host> <email>\n\n"
-    echo -e "Exemplo: \n\n      curl -sSL https://get.ticke.tz | sudo bash -s ticketz.exemplo.com.br email@exemplo.com.br\n\n"
+    echo -e     "Uso: \n\n      curl -sSL <URL_DO_SEU_SCRIPT_DE_INSTALACAO> | sudo bash -s [-b <branchname>] <frontend_host> <email>\n\n"
+    echo -e "Exemplo: \n\n      curl -sSL <URL_DO_SEU_SCRIPT_DE_INSTALACAO> | sudo bash -s rc-chat.exemplo.com.br email@exemplo.com.br\n\n"
 }
 
 # Função para mensagem em vermelho
@@ -71,7 +71,7 @@ fi
 
 echo ""
 echoblue "                                               "
-echoblue "  Ticketz - Site oficial https://ticke.tz      "
+echoblue "  RC-CHAT - Site oficial https://rc-chat.com   "
 echoblue "                                               "
 echoblue "  Contato Whatsapp: +55 49 99981 2291          "
 echoblue "                    https://wa.me/554999812291 "
@@ -80,13 +80,13 @@ echoblue "                                               "
 if [ "$BRANCH" = "" ] ; then
    echo ""
    echored "                                               "
-   echored "  Você está instalando o Ticketz Opensource    "
+   echored "  Você está instalando o RC-CHAT Opensource    "
    echored "                                               "
-   echored "  O Ticketz Opensource é um sistema de código  "
+   echored "  O RC-CHAT Opensource é um sistema de código  "
    echored "  aberto, disponível gratuitamente a partir    "
-   echored "  da página do projeto: https://ticke.tz       "
+   echored "  da página do projeto: https://rc-chat.com    "
    echored "                                               "
-   echored "  O Ticketz Opensource não pode ser vendido!   "
+   echored "  O RC-CHAT Opensource não pode ser vendido!   "
    echored "                                               "
    echored "  Se alguém te cobrou algo por este sistema    "
    echored "  é recomendado que solicite reembolso por     "
@@ -113,8 +113,9 @@ CURFOLDER=${PWD}
 which docker > /dev/null || curl -sSL https://get.docker.com | sh
 
 # Passo 3: Baixa o projeto e entra na pasta
-[ -d ticketz-docker-acme ] || git clone https://github.com/ticketz-oss/ticketz-docker-acme.git
-cd ticketz-docker-acme
+# CORREÇÃO: Clona o repositório RC-CHAT no diretório 'rc-chat'
+[ -d rc-chat ] || git clone https://github.com/<SEU_USUARIO>/RC-CHAT.git rc-chat
+cd rc-chat
 if ! git diff-index --quiet HEAD -- ; then
   echo "Salvando alterações locais com git stash push"
   git stash push &> /dev/null
@@ -143,33 +144,27 @@ if ! git pull &> pull.log; then
 fi
 
 # Passo 4: Configura os hostnames
-cat example.env-backend \
-  | sed -e "s/^BACKEND_HOST=.*/BACKEND_HOST=$backend_host/g"  \
-  | sed -e "s/^BACKEND_PATH=.*/BACKEND_PATH=$backend_path/g"  \
+# Copia o .env.example e faz as substituições
+cp .env.example .env
+
+cat .env \
   | sed -e "s/^FRONTEND_HOST=.*/FRONTEND_HOST=$frontend_host/g" \
-  | sed -e "s/^EMAIL_ADDRESS=.*/EMAIL_ADDRESS=$email/g"  > .env-backend
-  
-cat example.env-frontend \
-  | sed -e "s/^BACKEND_HOST=.*/BACKEND_HOST=$backend_host/g" \
-  | sed -e "s/^BACKEND_PATH=.*/BACKEND_PATH=$backend_path/g" \
-  | sed -e "s/^FRONTEND_HOST=.*/FRONTEND_HOST=$frontend_host/g" \
-  | sed -e "s/^EMAIL_ADDRESS=.*/EMAIL_ADDRESS=$email/g" > .env-frontend
+  | sed -e "s/^BACKEND_URL=.*/BACKEND_URL=https:\/\/$backend_host$backend_path/g" \
+  | sed -e "s/^FRONTEND_URL=.*/FRONTEND_URL=https:\/\/$frontend_host/g" \
+  | sed -e "s/^EMAIL_ADDRESS=.*/EMAIL_ADDRESS=$email/g" \
+  | sed -e "s/^VIRTUAL_HOST=.*/VIRTUAL_HOST=$backend_host/g" \
+  | sed -e "s/^LETSENCRYPT_HOST=.*/LETSENCRYPT_HOST=$backend_host/g" \
+  | sed -e "s/^LETSENCRYPT_EMAIL=.*/LETSENCRYPT_EMAIL=$email/g" \
+  > .env.tmp && mv .env.tmp .env
 
-cat >> .env-frontend << EOF
-
-SETUP_SYSTEM=get.ticke.tz
-
+## Adiciona configurações específicas para o backend se o backend_path for vazio (host separado)
+if [ -z "$backend_path" ] ; then
+  cat >> .env << EOF
+# Configurações para backend em host separado
+BACKEND_HOST=$backend_host
+BACKEND_PROTOCOL=https
 EOF
-
-## inclui configuração para o acme-companion se o backend tiver host a parte
-[ -z "$backend_path" ] && cat >> .env-backend << EOF
-# Normalmente não é necessário alterar estes valores
-VIRTUAL_HOST=\${BACKEND_HOST}
-VIRTUAL_PORT=3000
-LETSENCRYPT_HOST=\${BACKEND_HOST}
-LETSENCRYPT_EMAIL=\${EMAIL_ADDRESS}
-EOF
-
+fi
 
 DIDRESTORE=""
 
@@ -193,14 +188,16 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
    if [ -f ${CURFOLDER}/public_data.tar.gz ]; then
       echo "Encontrado arquivo com dados para a pasta public, iniciando processo de restauração..."
       
-      docker volume create --name ticketz-docker-acme_backend_public &> ${tmplog}-createpublic.log
+      # CORREÇÃO: Nome do volume Docker
+      docker volume create --name rc-chat_backend_public &> ${tmplog}-createpublic.log
       
       if [ $? -gt 0 ]; then
          echo -e "\n\nErro ao criar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-createpublic.log\n\n"
          exit 1
       fi
       
-      cat ${CURFOLDER}/public_data.tar.gz | docker run -i --rm -v ticketz-docker-acme_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
+      # CORREÇÃO: Nome do volume Docker
+      cat ${CURFOLDER}/public_data.tar.gz | docker run -i --rm -v rc-chat_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
 
       if [ $? -gt 0 ]; then
          echo -e "\n\nErro ao restaurar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-restorepublic.log\n\n"
@@ -214,7 +211,8 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
 fi
 
 if ! [ "${DIDRESTORE}" ]; then
-    latest_backup_file=$(ls -t ${CURFOLDER}/ticketz-backup-*.tar.gz 2>/dev/null | head -n 1)
+    # CORREÇÃO: Nome do arquivo de backup
+    latest_backup_file=$(ls -t ${CURFOLDER}/rc-chat-backup-*.tar.gz 2>/dev/null | head -n 1)
 fi
 
 if [ -n "${latest_backup_file}" ] && ! [ -d "backups" ]; then
@@ -249,7 +247,7 @@ cat << EOF
 A geração dos certificados e a inicialização do serviço pode levar
 alguns minutos.
 
-Após isso você pode acessar o Ticketz pela URL
+Após isso você pode acessar o RC-CHAT pela URL
 
         https://${frontend_host}
         
