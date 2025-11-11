@@ -86,7 +86,8 @@ export default async function saveMediaToFile(
     throw new Error("Failed to save media file");
   }
 
-  if (storage.adapter instanceof AwsS3StorageAdapter) {
+  const storageType = process.env.STORAGE_TYPE || "local";
+  if (storageType === "s3") {
     return storage.publicUrl(mediaPath);
   }
 
