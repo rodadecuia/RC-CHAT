@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   rc-chat:
   nginx-proxy:

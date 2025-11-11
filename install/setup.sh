@@ -169,7 +169,7 @@ fi
 DIDRESTORE=""
 
 ## baixa todos os componentes
-docker compose pull
+docker compose --profile acme pull
 
 if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
    echo "Dados de importação encotrados, iniciando o processo de carga..."
@@ -237,7 +237,7 @@ fi
 echo "Continuando a instalação..."
 
 # Passo 6: Sobe os containers
-if ! ( docker compose down && docker compose up -d ); then
+if ! ( docker compose --profile acme down && docker compose --profile acme up -d ); then
     echo "Falha ao reiniciar containers"
     echo -e "\n\nAlterações precisam ser verificadas manualmente, procure suporte se necessário\n\n"
     exit 1
