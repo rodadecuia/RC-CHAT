@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'beta'
       - 'fix/**'
       - 'dev'
       - 'test-**'
@@ -52,46 +53,53 @@ jobs:
           }
           EOT
 
-      - name: Log in to the Container registry
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        if: env.DOCKERHUB_USER != ''
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Docker meta Backend
         id: metabackend
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}
+            ${{ secrets.DOCKERHUB_USERNAME && format('{0}/rc-chat-backend', secrets.DOCKERHUB_USERNAME) }}
           labels: |
             org.opencontainers.image.title=rc-chat-backend
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=beta,enable=${{ github.ref == 'refs/heads/beta' }}
             type=sha
 
       - name: Docker meta Frontend
         id: metafrontend
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}
+            ${{ secrets.DOCKERHUB_USERNAME && format('{0}/rc-chat-frontend', secrets.DOCKERHUB_USERNAME) }}
           labels: |
             org.opencontainers.image.title=rc-chat-frontend
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=beta,enable=${{ github.ref == 'refs/heads/beta' }}
             type=sha
 
       - name: Build and push backend Docker image
         id: backend
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
@@ -101,7 +109,7 @@ jobs:
 
       - name: Build and push frontend Docker image
         id: frontend
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
