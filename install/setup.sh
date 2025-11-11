@@ -114,7 +114,7 @@ which docker > /dev/null || curl -sSL https://get.docker.com | sh
 
 # Passo 3: Baixa o projeto e entra na pasta
 # CORREÇÃO: Clona o repositório RC-CHAT no diretório 'rc-chat'
-[ -d rc-chat ] || git clone https://github.com/<SEU_USUARIO>/RC-CHAT.git rc-chat
+[ -d rc-chat ] || git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat
 cd rc-chat
 if ! git diff-index --quiet HEAD -- ; then
   echo "Salvando alterações locais com git stash push"
