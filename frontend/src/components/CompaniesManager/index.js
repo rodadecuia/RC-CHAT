@@ -16,6 +16,7 @@ import {
   Select,
   Checkbox,
   FormControlLabel,
+  Typography,
 } from "@material-ui/core";
 import { Formik, Form, Field } from "formik";
 import ButtonWithSpinner from "../ButtonWithSpinner";
@@ -84,7 +85,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export function CompanyForm(props) {
-  const { onSubmit, onDelete, onImpersonate, onCancel, initialValue, loading } = props;
+  const { onSubmit, onDelete, onImpersonate, onCancel, initialValue, loading, setLoading } = props;
   const classes = useStyles();
   const [plans, setPlans] = useState([]);
   const [modalUser, setModalUser] = useState(false);
@@ -793,6 +794,7 @@ export default function CompaniesManager() {
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             loading={loading}
+            setLoading={setLoading}
             onUpdateCompanyList={loadPlans} // Passa a função para recarregar a lista
           />
         </Grid>
