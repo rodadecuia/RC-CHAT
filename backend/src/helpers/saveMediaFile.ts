@@ -31,7 +31,7 @@ function getStorage(): FileStorage {
       }
     });
 
-    const adapter = new AwsS3StorageAdapter(client, process.env.S3_BUCKET);
+    const adapter = new AwsS3StorageAdapter(client, { bucket: process.env.S3_BUCKET }); // Correção aqui
     return new FileStorage(adapter);
   }
 
@@ -86,8 +86,8 @@ export default async function saveMediaToFile(
     throw new Error("Failed to save media file");
   }
 
-  // If using S3, return the full URL
-  if (storage.adapter instanceof AwsS3StorageAdapter) {
+  // Correção aqui: usar getAdapter()
+  if (storage.getAdapter() instanceof AwsS3StorageAdapter) {
     return storage.publicUrl(mediaPath);
   }
 

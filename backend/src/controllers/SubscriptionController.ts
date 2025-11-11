@@ -4,7 +4,7 @@ import AppError from "../errors/AppError";
 import CreateWebpushSubscriptionService from "../services/WebpushSubscriptionServices/CreateWebpushSubscriptionService";
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { id: userId } = req.user;
+  const userId = Number(req.user.id); // Convertido para number
   const { endpoint, p256dh, auth } = req.body;
 
   const schema = Yup.object().shape({

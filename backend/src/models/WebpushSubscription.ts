@@ -4,7 +4,9 @@ import {
   Model,
   DataType,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+  PrimaryKey, // Adicionado
+  AutoIncrement // Adicionado
 } from "sequelize-typescript";
 import User from "./User";
 
