@@ -80,7 +80,8 @@ export function PlanManagerForm(props) {
         queues: 0,
         value: 0,
         currency: "",
-        isPublic: true
+        isPublic: true,
+        whmcsProductId: null, // Adicionado whmcsProductId
     });
 
     useEffect(() => {
@@ -103,7 +104,7 @@ export function PlanManagerForm(props) {
                 }, 500)
             }
         >
-            {(values) => (
+            {({ values, setFieldValue }) => (
                 <Form className={classes.fullWidth}>
                     <Grid spacing={2} justifyContent="flex-end" container>
                         <Grid xs={12} sm={6} md={3} item>
@@ -216,6 +217,19 @@ export function PlanManagerForm(props) {
                                 type="number"
                             />
                         </Grid>
+                        {/* Campo WHMCS Product ID */}
+                        <Grid xs={12} sm={6} md={4} item>
+                            <Field
+                                as={TextField}
+                                label="WHMCS Product ID"
+                                name="whmcsProductId"
+                                variant="outlined"
+                                className={classes.fullWidth}
+                                margin="dense"
+                                type="number"
+                                onChange={(e) => setFieldValue('whmcsProductId', e.target.value === '' ? null : Number(e.target.value))}
+                            />
+                        </Grid>
                         <Grid xs={12} item>
                             <Grid justifyContent="flex-end" spacing={1} container>
                                 <Grid xs={4} md={1} item>
@@ -261,6 +275,7 @@ export function PlansManagerGrid(props) {
                         <TableCell align="center">{i18n.t("settings.Plans.connectionsLimit")}</TableCell>
                         <TableCell align="center">{i18n.t("settings.Plans.queuesLimit")}</TableCell>
                         <TableCell align="center">{i18n.t("common.value")}</TableCell>
+                        <TableCell align="center">WHMCS Product ID</TableCell> {/* Nova coluna */}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -277,6 +292,7 @@ export function PlansManagerGrid(props) {
                             <TableCell align="center">{row.connections || '-'}</TableCell>
                             <TableCell align="center">{row.queues || '-'}</TableCell>
                             <TableCell align="center">{safeValueFormat(row.value, row.currency)}</TableCell>
+                            <TableCell align="center">{row.whmcsProductId || '-'}</TableCell> {/* Exibição do WHMCS Product ID */}
                         </TableRow>
                     ))}
                 </TableBody>
@@ -299,6 +315,8 @@ export default function PlansManager() {
         queues: 0,
         value: 0,
         currency: "",
+        isPublic: true,
+        whmcsProductId: null, // Inicializa como null
     })
 
     useEffect(() => {
@@ -330,7 +348,8 @@ export default function PlansManager() {
             users: data.users,
             value: data.value.replace(",", "."),
             currency: data.currency,
-            isPublic: data.isPublic
+            isPublic: data.isPublic,
+            whmcsProductId: data.whmcsProductId, // Inclui whmcsProductId
         }
         console.log(datanew)
         setLoading(true)
@@ -374,7 +393,8 @@ export default function PlansManager() {
             queues: 0,
             value: 0,
             currency: "",
-            isPublic: true
+            isPublic: true,
+            whmcsProductId: null, // Limpa o campo
         })
     }
 
@@ -387,7 +407,8 @@ export default function PlansManager() {
             queues: data.queues || 0,
             value: data.value.toLocaleString('pt-br', { minimumFractionDigits: 2 }) || 0,
             currency: data.currency || '',
-            isPublic: data.isPublic
+            isPublic: data.isPublic,
+            whmcsProductId: data.whmcsProductId || null, // Carrega o whmcsProductId
         })
     }
 

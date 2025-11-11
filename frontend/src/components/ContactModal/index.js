@@ -75,7 +75,8 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 		number: "",
 		email: "",
     language: localStorage.getItem("language") || "",
-		disableBot: false
+		disableBot: false,
+    whmcsClientId: null, // Adicionado whmcsClientId
 	};
 
 	const [contact, setContact] = useState(initialState);
@@ -148,7 +149,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 						}, 400);
 					}}
 				>
-					{({ values, errors, touched, isSubmitting }) => (
+					{({ values, errors, touched, isSubmitting, setFieldValue }) => (
 						<Form>
 							<DialogContent dividers>
 								<Typography variant="subtitle1" gutterBottom>
@@ -198,6 +199,19 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                   >
                   </Field>
                 </div>
+                {/* Campo WHMCS Client ID */}
+                {contactId && ( // Só mostra se for edição
+                  <Field
+                    as={TextField}
+                    label="WHMCS Client ID"
+                    name="whmcsClientId"
+                    variant="outlined"
+                    margin="dense"
+                    fullWidth
+                    type="number"
+                    onChange={(e) => setFieldValue('whmcsClientId', e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                )}
 								<>
 								<FormControlLabel
 									label={i18n.t("contactModal.form.disableBot")}

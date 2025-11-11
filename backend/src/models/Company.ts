@@ -63,6 +63,9 @@ class Company extends Model<Company> {
   @Column
   language: string;
 
+  @Column
+  whmcsClientId: number;
+
   @CreatedAt
   createdAt: Date;
 

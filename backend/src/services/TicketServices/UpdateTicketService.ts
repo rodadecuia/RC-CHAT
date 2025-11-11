@@ -17,6 +17,9 @@ import { incrementCounter } from "../CounterServices/IncrementCounter";
 import { getJidOf } from "../WbotServices/getJidOf";
 import Queue from "../../models/Queue";
 import { _t } from "../TranslationServices/i18nService";
+import WhmcsService from "../WhmcsServices/WhmcsService";
+import Message from "../../models/Message";
+import Contact from "../../models/Contact";
 
 export interface UpdateTicketData {
   status?: string;
@@ -167,6 +170,46 @@ const UpdateTicketService = async ({
     }
 
     if (status !== undefined && ["closed"].indexOf(status) > -1) {
+      // Início da Integração WHMCS para Fechamento
+      if (ticket.whmcsTicketId && ticket.contact.whmcsClientId) {
+        try {
+          const messages = await Message.findAll({
+            where: { ticketId: ticket.id },
+            order: [["createdAt", "ASC"]],
+            include: [{ model: Contact, as: "contact" }]
+          });
+
+          const conversationLog = messages
+            .map(msg => {
+              const sender = msg.fromMe ? "Atendente" : msg.contact.name;
+              const timestamp = moment(msg.createdAt).format("DD/MM/YYYY HH:mm:ss");
+              return `[${timestamp}] ${sender}:\n${msg.body}`;
+            })
+            .join("\n\n---------------------------------\n\n");
+
+          await WhmcsService.execute({
+            action: "AddTicketReply",
+            ticketid: ticket.whmcsTicketId,
+            clientid: ticket.contact.whmcsClientId,
+            message: `Conversa do RC-CHAT:\n\n${conversationLog}`
+          });
+
+          await WhmcsService.execute({
+            action: "UpdateTicket",
+            ticketid: ticket.whmcsTicketId,
+            status: "Closed"
+          });
+
+          logger.info(`Ticket do WHMCS ${ticket.whmcsTicketId} fechado e atualizado com a conversa.`);
+        } catch (error) {
+          logger.error({ err: error }, "Falha ao fechar ticket no WHMCS.");
+          // Não lança erro para não impedir o fechamento no RC-CHAT
+        }
+      } else {
+        logger.warn(`WHMCS Ticket ID ou Client ID não encontrado para o ticket ${ticket.id}. Fechamento no WHMCS ignorado.`);
+      }
+      // Fim da Integração WHMCS
+
       if (!ticketTraking.finishedAt) {
         ticketTraking.finishedAt = moment().toDate();
         ticketTraking.whatsappId = ticket.whatsappId;

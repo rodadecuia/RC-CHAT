@@ -14,6 +14,8 @@ import {
   TableRow,
   IconButton,
   Select,
+  Checkbox,
+  FormControlLabel,
 } from "@material-ui/core";
 import { Formik, Form, Field } from "formik";
 import ButtonWithSpinner from "../ButtonWithSpinner";
@@ -98,8 +100,13 @@ export function CompanyForm(props) {
     campaignsEnabled: false,
     dueDate: "",
     recurrence: "",
+    whmcsClientId: "", // Adicionado whmcsClientId
     ...initialValue,
   });
+
+  const [showConfirmWhmcsStatusDialog, setShowConfirmWhmcsStatusDialog] = useState(false);
+  const [whmcsStatusToUpdate, setWhmcsStatusToUpdate] = useState("");
+  const [updateRcChatStatus, setUpdateRcChatStatus] = useState(true);
 
   const { list: listPlans } = usePlans();
 
@@ -191,6 +198,28 @@ export function CompanyForm(props) {
     setRecord(data);
   };
 
+  const handleUpdateWhmcsStatus = async () => {
+    setLoading(true);
+    try {
+      await api.put(`/companies/${record.id}/whmcs-status`, {
+        whmcsStatus: whmcsStatusToUpdate,
+        updateRcChatStatus: updateRcChatStatus,
+      });
+      toast.success(`Status WHMCS atualizado para ${whmcsStatusToUpdate}!`);
+      setShowConfirmWhmcsStatusDialog(false);
+      // Recarregar a lista de companhias para refletir a mudança
+      props.onUpdateCompanyList(); 
+    } catch (e) {
+      toast.error("Erro ao atualizar status WHMCS.");
+    }
+    setLoading(false);
+  };
+
+  const handleOpenWhmcsStatusDialog = (status) => {
+    setWhmcsStatusToUpdate(status);
+    setShowConfirmWhmcsStatusDialog(true);
+  };
+
   return (
     <>
       <ModalUsers
@@ -210,7 +239,7 @@ export function CompanyForm(props) {
           }, 500)
         }
       >
-        {(values, setValues) => (
+        {({ values, setFieldValue }) => (
           <Form className={classes.fullWidth}>
             <Grid spacing={2} justifyContent="flex-end" container>
               <Grid xs={12} sm={6} md={4} item>
@@ -291,7 +320,7 @@ export function CompanyForm(props) {
               </Grid>
               <Grid xs={12} sm={6} md={2} item>
                 <FormControl margin="dense" variant="outlined" fullWidth>
-                  <InputLabel htmlFor="status-selection">Campanhas</InputLabel>
+                  <InputLabel htmlFor="campaigns-selection">Campanhas</InputLabel>
                   <Field
                     as={Select}
                     id="campaigns-selection"
@@ -342,6 +371,84 @@ export function CompanyForm(props) {
                   </Field>
                 </FormControl>
               </Grid>
+              {/* Campo whmcsClientId */}
+              {record.id !== undefined && ( // Só mostra se for edição
+                <Grid xs={12} sm={6} md={4} item>
+                  <Field
+                    as={TextField}
+                    label="WHMCS Client ID"
+                    name="whmcsClientId"
+                    variant="outlined"
+                    className={classes.fullWidth}
+                    margin="dense"
+                    type="number"
+                    onChange={(e) => setFieldValue('whmcsClientId', e.target.value === '' ? null : Number(e.target.value))}
+                  />
+                </Grid>
+              )}
+              {/* Botões de Status WHMCS */}
+              {record.id !== undefined && record.whmcsClientId && ( // Só mostra se for edição e tiver WHMCS Client ID
+                <Grid xs={12} item>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Ações WHMCS:
+                  </Typography>
+                  <Grid container spacing={1}>
+                    <Grid item>
+                      <ButtonWithSpinner
+                        loading={loading}
+                        onClick={() => handleOpenWhmcsStatusDialog("Active")}
+                        variant="contained"
+                        color="primary"
+                      >
+                        Ativar
+                      </ButtonWithSpinner>
+                    </Grid>
+                    <Grid item>
+                      <ButtonWithSpinner
+                        loading={loading}
+                        onClick={() => handleOpenWhmcsStatusDialog("Inactive")}
+                        variant="contained"
+                        color="default"
+                      >
+                        Desativar
+                      </ButtonWithSpinner>
+                    </Grid>
+                    <Grid item>
+                      <ButtonWithSpinner
+                        loading={loading}
+                        onClick={() => handleOpenWhmcsStatusDialog("Suspended")}
+                        variant="contained"
+                        color="secondary"
+                      >
+                        Suspender
+                      </ButtonWithSpinner>
+                    </Grid>
+                    <Grid item>
+                      <ButtonWithSpinner
+                        loading={loading}
+                        onClick={() => handleOpenWhmcsStatusDialog("Closed")}
+                        variant="contained"
+                        color="inherit"
+                      >
+                        Encerrar
+                      </ButtonWithSpinner>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={updateRcChatStatus}
+                            onChange={(e) => setUpdateRcChatStatus(e.target.checked)}
+                            name="updateRcChatStatus"
+                            color="primary"
+                          />
+                        }
+                        label="Sincronizar status no RC-CHAT"
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              )}
               <Grid xs={12} item>
                 <Grid justifyContent="flex-end" spacing={1} container>
                   <Grid xs={4} md={1} item>
@@ -425,6 +532,19 @@ export function CompanyForm(props) {
           </Form>
         )}
       </Formik>
+      <ConfirmationModal
+        title={`Confirmar atualização de status WHMCS para "${whmcsStatusToUpdate}"`}
+        open={showConfirmWhmcsStatusDialog}
+        onClose={() => setShowConfirmWhmcsStatusDialog(false)}
+        onConfirm={handleUpdateWhmcsStatus}
+      >
+        Deseja realmente atualizar o status do cliente WHMCS para "{whmcsStatusToUpdate}"?
+        {whmcsStatusToUpdate !== "Active" && (
+          <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+            Atenção: Desativar, Suspender ou Encerrar um cliente no WHMCS pode afetar o acesso aos serviços.
+          </Typography>
+        )}
+      </ConfirmationModal>
     </>
   );
 }
@@ -504,6 +624,7 @@ export function CompaniesManagerGrid(props) {
             <TableCell align="left">Status</TableCell>
             <TableCell align="left">Criada Em</TableCell>
             <TableCell align="left">Vencimento</TableCell>
+            <TableCell align="left">WHMCS ID</TableCell> {/* Nova coluna */}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -526,6 +647,7 @@ export function CompaniesManagerGrid(props) {
                 <br />
                 <span>{row.recurrence}</span>
               </TableCell>
+              <TableCell align="left" style={{ color: "unset" }}>{row.whmcsClientId || "-"}</TableCell> {/* Exibição do WHMCS Client ID */}
             </TableRow>
           ))}
         </TableBody>
@@ -552,6 +674,7 @@ export default function CompaniesManager() {
     campaignsEnabled: false,
     dueDate: "",
     recurrence: "",
+    whmcsClientId: null, // Inicializa como null
   });
 
   const { handleImpersonate } = useContext(AuthContext);
@@ -628,6 +751,7 @@ export default function CompaniesManager() {
       campaignsEnabled: false,
       dueDate: "",
       recurrence: "",
+      whmcsClientId: null, // Limpa o campo
     }));
   };
 
@@ -654,6 +778,7 @@ export default function CompaniesManager() {
       campaignsEnabled,
       dueDate: data.dueDate || "",
       recurrence: data.recurrence || "",
+      whmcsClientId: data.whmcsClientId || null, // Carrega o whmcsClientId
     }));
   };
 
@@ -668,6 +793,7 @@ export default function CompaniesManager() {
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             loading={loading}
+            onUpdateCompanyList={loadPlans} // Passa a função para recarregar a lista
           />
         </Grid>
         <Grid xs={12} item>

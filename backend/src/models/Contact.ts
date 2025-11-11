@@ -66,6 +66,9 @@ class Contact extends Model {
   @Column
   language: string;
 
+  @Column
+  whmcsClientId: number;
+
   @CreatedAt
   createdAt: Date;
 

@@ -25,13 +25,15 @@ import campaignSettingRoutes from "./campaignSettingRoutes";
 import announcementRoutes from "./announcementRoutes";
 import chatRoutes from "./chatRoutes";
 import invoiceRoutes from "./invoicesRoutes";
-import subscriptionRoutes from "./subscriptionRoutes"; // Corrigido
+import subscriptionRoutes from "./subscriptionRoutes";
 import ticketTagRoutes from "./ticketTagRoutes";
 import pwaRoutes from "./pwaRoutes";
 import versionRoutes from "./versionRoutes";
 import ticketzOSSRoutes from "./ticketzOSSRoutes";
 import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
+import companyWhmcsRoutes from "./companyWhmcsRoutes";
+import whmcsWebhookRoutes from "./whmcsWebhookRoutes"; // Nova importação
 
 const routes = Router();
 
@@ -67,5 +69,7 @@ routes.use(versionRoutes);
 routes.use(ticketzOSSRoutes);
 routes.use(i18nRoutes);
 routes.use(wavoipRoutes);
+routes.use(companyWhmcsRoutes);
+routes.use(whmcsWebhookRoutes); // Uso da nova rota
 
 export default routes;

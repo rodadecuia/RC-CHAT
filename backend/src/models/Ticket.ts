@@ -50,6 +50,9 @@ class Ticket extends Model<Ticket> {
   @Column
   isGroup: boolean;
 
+  @Column
+  whmcsTicketId: number;
+
   @CreatedAt
   createdAt: Date;
 

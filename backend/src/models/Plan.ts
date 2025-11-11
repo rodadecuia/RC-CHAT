@@ -38,6 +38,9 @@ class Plan extends Model<Plan> {
   @Column
   currency: string;
 
+  @Column
+  whmcsProductId: number; // Nova coluna
+
   @CreatedAt
   createdAt: Date;
 
