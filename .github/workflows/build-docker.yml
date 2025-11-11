@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'beta'
       - 'fix/**'
       - 'dev'
       - 'test-**'
@@ -13,6 +14,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_BACKEND: ${{ github.repository_owner }}/rc-chat-backend
   IMAGE_FRONTEND: ${{ github.repository_owner }}/rc-chat-frontend
+  DOCKERHUB_IMAGE_BACKEND: ${{ secrets.DOCKERHUB_USERNAME }}/rc-chat-backend
+  DOCKERHUB_IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/rc-chat-frontend
 
 jobs:
   build-and-push-images:
@@ -52,12 +55,19 @@ jobs:
           }
           EOT
 
-      - name: Log in to the Container registry
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker meta Backend
         id: metabackend
@@ -65,13 +75,12 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}
+            ${{ env.DOCKERHUB_IMAGE_BACKEND }}
           labels: |
             org.opencontainers.image.title=rc-chat-backend
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=beta,enable=${{ github.ref == 'refs/heads/beta' }}
             type=sha
 
       - name: Docker meta Frontend
@@ -80,13 +89,12 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}
+            ${{ env.DOCKERHUB_IMAGE_FRONTEND }}
           labels: |
             org.opencontainers.image.title=rc-chat-frontend
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=beta,enable=${{ github.ref == 'refs/heads/beta' }}
             type=sha
 
       - name: Build and push backend Docker image

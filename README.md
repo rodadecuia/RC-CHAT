@@ -1,213 +1,109 @@
 # RC-CHAT
 
-## English
-
-### About the Project
-
-RC-CHAT is a communicator with CRM and helpdesk features that utilizes WhatsApp as a means of communication with clients.
-
-### Objective
-
-The objective of this project is to improve and keep open updates about the published RC-CHAT SaaS. Mainly focused on application quality and ease of installation and use.
-
-### Very Quick Start on a public Server
-
-There are Docker images provided from the project, so you can get **RC-CHAT** to work very easily on a public server (baremetal or VPS).
-
-#### First setup
-
-Before starting you must complete this checklist:
-
-- [ ] Have a clean server running Ubuntu 20 or newer
-- [ ] Ports 80 and 443 available and not filtered by firewall
-- [ ] One hostname with configured DNS pointing to your server
-
-After this, just log in to your server and issue the following command, replacing the hostnames you already configured and your email address:
-
-```bash
-curl -sSL <URL_DO_SEU_SCRIPT_DE_INSTALACAO> | sudo bash -s app.example.com name@example.com
-```
-
-After a few minutes you will have the server running at the hostname you defined.
-
-The default login will be the email address provided in the installation command and the default password is `123456`, you must change it right away.
-
-#### Upgrade
-
-The upgrade is just easy as the instalation, you just need to login to your server using the same username you used on the installation and issue the following command:
-
-```bash
-curl -sSL <URL_DO_SEU_SCRIPT_DE_ATUALIZACAO> | sudo bash
-```
-
-Your server will go down and after some minutes it will be running in the latest released version.
-
-#### Inspect logs
-
-As all elements are running in containers the logs must be checked through the docker command.
-
-You must login to your server using the same user you used for the installation.
-
-First you need to move the current directory to the installation folder:
-
-```bash
-cd ~/rc-chat-docker-acme
-```
-
-After this you can get a full log report with the following command:
-
-```bash
-docker compose logs -t
-```
-
-If you want to "tail follow" the logs just add a `-f` parameter to that command:
-
-```bash
-docker compose logs -t -f
-
-```
-
-### Running from Source code Using Docker
-
-For installation, you need to have Docker Community Edition and the Git client installed. It is ideal to find the best way to install these resources on your preferred operating system. [The official Docker installation guide can be found here](https://docs.docker.com/engine/install/).
-
-In both cases, it is necessary to clone the repository, then open a command terminal:
-
-```bash
-git clone https://github.com/<SEU_USUARIO>/rc-chat.git
-cd rc-chat
-```
-
-### Running Locally
-
-By default, the configuration is set to run the system only on the local computer. To run it on a local network, you need to edit the `.env` file and change the backend and frontend addresses from `localhost` to the desired IP, for example, `192.168.0.10`.
-
-To run the system, simply execute the following command:
-
-```bash
-docker compose --profile local up -d
-```
-
-On the first run, the system will initialize the databases and tables, and after a few minutes, RC-CHAT will be accessible through port 3000.
-
-The default username is `admin@rc-chat.host`, and the default password is 123456.
-
-The application will restart automatically after each server reboot.
-
-Execution can be stopped with the command:
-
-```bash
-docker compose --profile local down
-```
-
-### Running and Serving on the Internet
-
-Having a server accessible via the internet, it is necessary to adjust two DNS names of your choice, one for the backend and another for the frontend, and also an email address for certificate registration, for example:
-
-* **backend:** api.rc-chat.example.com
-* **frontend:** rc-chat.example.com
-* **email:** rc-chat@example.com
-
-You need to edit the `.env` file, defining these values in them.
-
-If you want to use reCAPTCHA in the company signup, you also need to insert the secret and site keys in the `.env` file.
-
-This guide assumes that the terminal is open and logged in with a regular user who has permission to use the `sudo` command to execute commands as root.
-
-Being in the project's root folder, execute the following command to start the service:
-
-```bash
-sudo docker compose --profile acme up -d
-```
-
-On the first run, Docker will compile the code and create the containers, and then RC-CHAT will initialize the databases and tables. This operation can take quite some time, after which RC-CHAT will be accessible at the provided frontend address.
-
-The default username is the email address provided on the `.env` file and the default password is 123456.
-
-The application will restart automatically after each server reboot.
-
-To terminate the service, use the following command:
-
-```bash
-sudo docker compose --profile acme down
-```
-
-### Important Notice
-
-This project is not affiliated with Meta, WhatsApp, or any other company. The use of the provided code is the sole responsibility of the users and does not imply any liability for the author or project collaborators.
-
----
-
-## Português
-
-### Sobre o projeto
+## Sobre o projeto
 
 RC-CHAT é um comunicador com recursos de CRM e helpdesk que utiliza
 Whatsapp como meio de comunicação com os clientes.
 
-### Objetivo
+## Objetivo
 
 Este projeto tem por objetivo melhorar e manter abertas as atualizações sobre o RC-CHAT
 SaaS publicado. Principalmente direcionadas à qualidade da aplicação e à
 facilidade de instalação e utilização.
 
-### Início Muito Rápido em um Servidor Público
+## Guia de Instalação Automatizada
 
-Existem imagens Docker fornecidas pelo projeto, então você pode fazer o **RC-CHAT** funcionar muito facilmente em um servidor público (baremetal ou VPS).
+Este guia descreve como instalar o RC-CHAT em um servidor de forma automatizada usando nosso script de instalação. O script cuida da configuração do ambiente, do Docker e da inicialização dos serviços.
 
-#### Primeira configuração
+### Pré-requisitos
 
-Antes de começar, você deve completar esta lista de verificação:
+Antes de executar o script, certifique-se de que você tem:
 
-- [ ] Ter um servidor limpo rodando Ubuntu 20 ou mais recente
-- [ ] Portas 80 e 443 disponíveis e não filtradas pelo firewall
-- [ ] Um nome de host com DNS configurado apontando para o seu servidor
+1.  **Um Servidor (VPS):** Uma máquina virtual limpa com uma distribuição Linux recente. **Ubuntu 22.04 LTS** é recomendado.
+2.  **Registros DNS Configurados:** Você precisa que o domínio (ou subdomínio) que você vai usar para o sistema esteja apontando para o endereço de IP do seu servidor. Por exemplo, se você vai acessar o sistema em `rc-chat.meudominio.com`, crie um **registro DNS do tipo A** para `rc-chat.meudominio.com` apontando para o IP do seu servidor.
+3.  **Acesso Root:** O script precisa ser executado com privilégios de superusuário (`sudo`).
 
-Após isso, basta fazer login no seu servidor e emitir o seguinte comando, substituindo os nomes de host que você já configurou e seu endereço de email:
+### Comando de Instalação
 
-```bash
-curl -sSL <URL_DO_SEU_SCRIPT_DE_INSTALACAO> | sudo bash -s app.exemplo.com nome@exemplo.com
+Para iniciar a instalação, conecte-se ao seu servidor via SSH e execute o seguinte comando. Ele irá baixar e executar o script de instalação diretamente.
+
+```sh
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s [opções] <host_frontend> <email>
 ```
 
-Após alguns minutos, você terá o servidor rodando no nome que você deu para o host.
+#### Parâmetros Obrigatórios
 
-O login padrão é o endereço de email fornecido no comando de instalação e a senha padrão é `123456`, você deve alterá-la imediatamente.
+-   `<host_frontend>`: O domínio principal que você usará para acessar o sistema. Ex: `rc-chat.meudominio.com`.
+-   `<email>`: Seu endereço de e-mail. Ele será usado para o login inicial e para gerar os certificados de segurança SSL/TLS com Let's Encrypt.
 
-#### Atualização
+#### Opções (Flags)
 
-A atualização é tão fácil quanto a instalação, você só precisa fazer login no seu servidor usando o mesmo nome de usuário que você usou na instalação e emitir o seguinte comando:
+Você pode personalizar a instalação usando as seguintes flags opcionais:
 
-```bash
-curl -sSL <URL_DO_SEU_SCRIPT_DE_ATUALIZACAO> | sudo bash
+| Flag          | Descrição                                                                                                                            |
+| :------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `--beta`      | Instala a versão de testes (`beta`) em vez da versão estável (`latest`). Ideal para testar novos recursos antes de irem para produção. |
+| `--dockerhub` | Puxa as imagens Docker do **Docker Hub** (`rodadecuiaapp`) em vez do registro padrão do **GitHub** (`ghcr.io/rodadecuia`).            |
+| `--branch`    | (Avançado) Faz o checkout de uma branch específica do repositório Git antes da instalação. Útil para desenvolvedores.                 |
+
+### Exemplos de Uso
+
+Aqui estão alguns exemplos para os cenários mais comuns.
+
+#### 1. Instalação Padrão (Produção)
+
+Esta é a instalação recomendada para a maioria dos usuários. Ela usa a imagem `latest` (estável) do registro do GitHub (GHCR).
+
+```sh
+curl -sSL ... | sudo bash -s rc-chat.meudominio.com admin@meudominio.com
 ```
 
-Seu servidor ficará fora do ar e após alguns minutos ele estará rodando na última versão lançada.
+#### 2. Instalação da Versão Beta
 
-#### Inspecionar logs
+Para testar as funcionalidades mais recentes que ainda estão em desenvolvimento.
 
-Como todos os elementos estão rodando em containers, os logs devem ser verificados através do comando docker.
-
-Você deve fazer login no seu servidor usando o mesmo usuário que você usou para a instalação.
-
-Primeiro você precisa mover o diretório atual para a pasta de instalação:
-
-```bash
-cd ~/rc-chat-docker-acme
+```sh
+curl -sSL ... | sudo bash -s --beta rc-chat.meudominio.com admin@meudominio.com
 ```
 
-Após isso, você pode obter um relatório completo de logs com o seguinte comando:
+#### 3. Instalação Usando o Docker Hub
 
-```bash
-docker compose logs -t
+Caso o registro do GitHub (GHCR) esteja indisponível ou você prefira usar o Docker Hub.
+
+```sh
+curl -sSL ... | sudo bash -s --dockerhub rc-chat.meudominio.com admin@meudominio.com
 ```
 
-Se você quiser "seguir" os logs em tempo real, basta adicionar um parâmetro `-f` a esse comando:
+#### 4. Instalação da Versão Beta a partir do Docker Hub
 
-```bash
-docker compose logs -t -f
+Você pode combinar as flags para cenários mais específicos.
+
+```sh
+curl -sSL ... | sudo bash -s --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
 ```
 
-### Rodando o projeto a partir do Código Fonte usando Docker:
+### O que o Script Faz?
+
+1.  **Verifica o Ambiente:** Garante que Docker e Git estão instalados.
+2.  **Clona ou Atualiza o Repositório:** Baixa a versão mais recente do código do RC-CHAT.
+3.  **Configura o Ambiente:** Cria o arquivo `.env` com base nos domínios e e-mail que você forneceu.
+4.  **Baixa as Imagens Docker:** Puxa as imagens corretas (`latest` ou `beta`) do registro correto (`GHCR` ou `Docker Hub`) com base nas flags que você usou.
+5.  **Inicia os Serviços:** Sobe todos os contêineres necessários (backend, frontend, banco de dados, etc.) usando `docker compose`.
+6.  **Gera Certificados SSL:** Configura o Nginx Proxy para obter certificados SSL/TLS gratuitos e renová-los automaticamente.
+
+Após a conclusão, o sistema estará acessível na URL fornecida. O login inicial será o e-mail informado e a senha padrão é `123456`.
+
+### Como Atualizar uma Instalação Existente
+
+Para atualizar sua instalação para a versão mais recente, **basta executar o mesmo comando de instalação que você usou originalmente**. O script é inteligente e irá:
+
+1.  Puxar a versão mais recente do código do repositório Git.
+2.  Baixar as imagens Docker mais recentes (`latest` ou `beta`).
+3.  Reiniciar os contêineres com a nova versão.
+
+Seus dados e configurações no banco de dados serão preservados.
+
+## Rodando o projeto a partir do Código Fonte usando Docker:
 
 Para a
 instalação é necessário ter o Docker Community Edition e o cliente Git
@@ -294,7 +190,7 @@ Para encerrar o serviço utiliza-se o seguinte comando:
 sudo docker compose --profile acme down
 ```
 
-### Aviso Importante
+## Aviso Importante
 
 Este projeto não está afiliado à Meta, WhatsApp ou qualquer outra empresa.
 A utilização do código fornecido é de responsabilidade exclusiva dos usuários
