@@ -18,9 +18,10 @@ services:
   #-- Ambiente Local --#
   backend:
     profiles: ["local", "acme", "cloudflare"]
-    build:
-      context: ./backend
-      dockerfile: ./Dockerfile
+    image: ghcr.io/rodadecuia/rc-chat-backend:latest
+    # build:
+    #   context: ./backend
+    #   dockerfile: ./Dockerfile
     volumes:
       - backend_public:/usr/src/app/public
       - backend_private:/usr/src/app/private
@@ -37,9 +38,10 @@ services:
 
   frontend:
     profiles: ["local", "acme", "cloudflare"]
-    build:
-      context: ./frontend
-      dockerfile: ./Dockerfile
+    image: ghcr.io/rodadecuia/rc-chat-frontend:latest
+    # build:
+    #   context: ./frontend
+    #   dockerfile: ./Dockerfile
     env_file:
       - .env
     volumes:
