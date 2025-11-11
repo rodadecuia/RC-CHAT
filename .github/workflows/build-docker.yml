@@ -14,8 +14,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_BACKEND: ${{ github.repository_owner }}/rc-chat-backend
   IMAGE_FRONTEND: ${{ github.repository_owner }}/rc-chat-frontend
-  DOCKERHUB_IMAGE_BACKEND: ${{ secrets.DOCKERHUB_USERNAME }}/rc-chat-backend
-  DOCKERHUB_IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/rc-chat-frontend
 
 jobs:
   build-and-push-images:
@@ -63,7 +61,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        if: secrets.DOCKERHUB_USERNAME != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -71,11 +69,11 @@ jobs:
 
       - name: Docker meta Backend
         id: metabackend
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}
-            ${{ env.DOCKERHUB_IMAGE_BACKEND }}
+            ${{ secrets.DOCKERHUB_USERNAME && format('{0}/rc-chat-backend', secrets.DOCKERHUB_USERNAME) }}
           labels: |
             org.opencontainers.image.title=rc-chat-backend
           tags: |
@@ -85,11 +83,11 @@ jobs:
 
       - name: Docker meta Frontend
         id: metafrontend
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}
-            ${{ env.DOCKERHUB_IMAGE_FRONTEND }}
+            ${{ secrets.DOCKERHUB_USERNAME && format('{0}/rc-chat-frontend', secrets.DOCKERHUB_USERNAME) }}
           labels: |
             org.opencontainers.image.title=rc-chat-frontend
           tags: |
@@ -99,7 +97,7 @@ jobs:
 
       - name: Build and push backend Docker image
         id: backend
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
@@ -109,7 +107,7 @@ jobs:
 
       - name: Build and push frontend Docker image
         id: frontend
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
