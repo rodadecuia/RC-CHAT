@@ -25,7 +25,7 @@ import campaignSettingRoutes from "./campaignSettingRoutes";
 import announcementRoutes from "./announcementRoutes";
 import chatRoutes from "./chatRoutes";
 import invoiceRoutes from "./invoicesRoutes";
-import subscriptionRoutes from "./subscriptionRoutes";
+import subscriptionRoutes from "./subScriptionRoutes";
 import ticketTagRoutes from "./ticketTagRoutes";
 import pwaRoutes from "./pwaRoutes";
 import versionRoutes from "./versionRoutes";
