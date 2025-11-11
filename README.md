@@ -24,8 +24,10 @@ Antes de executar o script, certifique-se de que você tem:
 
 Para iniciar a instalação, conecte-se ao seu servidor via SSH e execute o seguinte comando. Ele irá baixar e executar o script de instalação diretamente.
 
+**Importante:** Note o uso de `--` após `-s`. Isso é necessário para que as opções (flags) sejam passadas para o script, e não para o `bash`.
+
 ```sh
-curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s [opções] <host_frontend> <email>
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s -- [opções] <host_frontend> <email>
 ```
 
 #### Parâmetros Obrigatórios
@@ -52,7 +54,7 @@ Aqui estão alguns exemplos para os cenários mais comuns.
 Esta é a instalação recomendada para a maioria dos usuários. Ela usa a imagem `latest` (estável) do registro do GitHub (GHCR).
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s -- rc-chat.meudominio.com admin@meudominio.com
 ```
 
 #### 2. Instalação da Versão Beta
@@ -60,7 +62,7 @@ curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setu
 Para testar as funcionalidades mais recentes que ainda estão em desenvolvimento.
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s --beta rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s -- --beta rc-chat.meudominio.com admin@meudominio.com
 ```
 
 #### 3. Instalação Usando o Docker Hub
@@ -68,7 +70,7 @@ curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setu
 Caso o registro do GitHub (GHCR) esteja indisponível ou você prefira usar o Docker Hub.
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s --dockerhub rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s -- --dockerhub rc-chat.meudominio.com admin@meudominio.com
 ```
 
 #### 4. Instalação da Versão Beta a partir do Docker Hub
@@ -76,7 +78,7 @@ curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setu
 Você pode combinar as flags para cenários mais específicos.
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh | sudo bash -s -- --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
 ```
 
 ### O que o Script Faz?

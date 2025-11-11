@@ -2,8 +2,19 @@
 
 # Função para mostrar a mensagem de uso
 show_usage() {
-    echo -e     "Uso: \n\n      curl -sSL <URL_DO_SEU_SCRIPT_DE_INSTALACAO> | sudo bash -s [-b <branchname>] <frontend_host> <email>\n\n"
-    echo -e "Exemplo: \n\n      curl -sSL <URL_DO_SEU_SCRIPT_DE_INSTALACAO> | sudo bash -s rc-chat.exemplo.com.br email@exemplo.com.br\n\n"
+    echo -e "Uso: \n"
+    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- [opções] <frontend_host> <email>\n"
+    echo -e "Opções:"
+    echo -e "  --beta                  Instala a versão experimental (tag 'beta')."
+    echo -e "  --dockerhub             Usa as imagens do Docker Hub em vez do GitHub (ghcr.io)."
+    echo -e "  --branch <branchname>   Faz checkout de uma branch específica do repositório git.\n"
+    echo -e "Exemplos: \n"
+    echo -e "  Instalação Padrão (Produção do GHCR):"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "  Instalação da Versão Beta (do GHCR):"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "  Instalação Padrão (do Docker Hub):"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- --dockerhub rc-chat.exemplo.com.br email@exemplo.com.br\n"
 }
 
 # Função para mensagem em vermelho
@@ -21,19 +32,38 @@ echoblue() {
 }
 
 # Verifica se está rodando usando o bash
-
 if ! [ -n "$BASH_VERSION" ]; then
    echo "Este script deve ser executado como utilizando o bash\n\n" 
    show_usage
    exit 1
 fi
 
-# testa se pediu branch
-if [ "$1" = "-b" ] ; then
-   BRANCH=$2
-   shift
-   shift
-fi
+# Inicializa variáveis com valores padrão
+BRANCH=""
+export IMAGE_TAG="latest"
+export IMAGE_PREFIX="ghcr.io/rodadecuia"
+
+# Processa os argumentos de flag
+while [[ "$1" =~ ^- ]]; do
+  case $1 in
+    --beta )
+      export IMAGE_TAG="beta"
+      shift
+      ;;
+    --dockerhub )
+      export IMAGE_PREFIX="rodadecuiaapp"
+      shift
+      ;;
+    --branch | -b )
+      BRANCH="$2"
+      shift 2
+      ;;
+    * )
+      show_usage
+      exit 1
+      ;;
+  esac
+done
 
 # Verifica se está rodando como root
 if [[ $EUID -ne 0 ]]; then
@@ -41,25 +71,14 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Verifica se os parâmetros estão corretos
-if [ -z "$2" ]; then
+# Atribui os parâmetros restantes
+frontend_host=$1
+email=$2
+
+# Verifica se os parâmetros principais estão corretos
+if [ -z "$frontend_host" ] || [ -z "$email" ]; then
     show_usage
     exit 1
-fi
-
-emailregex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
-
-# Atribui os valores dos parâmetros a variáveis
-if [ -n "$3" ] ; then
-    backend_host="$1"
-    backend_path=""
-    frontend_host="$2"
-    email="$3"
-else 
-    backend_host="$1"
-    backend_path="\\/backend"
-    frontend_host="$1"
-    email="$2"
 fi
 
 emailregex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
@@ -67,6 +86,17 @@ if ! [[ $email =~ $emailregex ]] ; then
     echo "email inválido"
     show_usage
     exit 1
+fi
+
+# Define backend_host e backend_path
+if [ -n "$3" ] ; then
+    backend_host="$1"
+    backend_path=""
+    frontend_host="$2"
+    email="$3"
+else 
+    backend_host="$frontend_host"
+    backend_path="\\/backend"
 fi
 
 echo ""
@@ -77,32 +107,24 @@ echoblue "  Contato Whatsapp: +55 49 99981 2291          "
 echoblue "                    https://wa.me/554999812291 "
 echoblue "                                               "
 
-if [ "$BRANCH" = "" ] ; then
-   echo ""
+# Mensagem sobre o registro e a versão
+echo ""
+echoblue "  Configuração da Instalação:                  "
+echoblue "  - Registro da Imagem: $IMAGE_PREFIX"
+echoblue "  - Versão da Imagem  : $IMAGE_TAG"
+echoblue "                                               "
+echo ""
+
+# Aviso para instalação Beta
+if [ "$IMAGE_TAG" = "beta" ]; then
    echored "                                               "
-   echored "  Você está instalando o RC-CHAT Opensource    "
-   echored "                                               "
-   echored "  O RC-CHAT Opensource é um sistema de código  "
-   echored "  aberto, disponível gratuitamente a partir    "
-   echored "  da página do projeto: https://rc-chat.com    "
-   echored "                                               "
-   echored "  O RC-CHAT Opensource não pode ser vendido!   "
-   echored "                                               "
-   echored "  Se alguém te cobrou algo por este sistema    "
-   echored "  é recomendado que solicite reembolso por     "
-   echored "  se tratar de uma cobrança indevida.          "
-   echored "                                               "
-   echored "  Por ser um sistema opensource você pode      "
-   echored "  prosseguir com a instalação mesmo assim e    "
-   echored "  conhecer o sistema.                          "
-   echored "                                               "
-   echored "  Aperte CTRL-C para cancelar                  "
-   echored "                                               "
-   echored "  A instalação irá prosseguir em 30 segundos   "
+   echored "  ATENÇÃO: Você está instalando a versão BETA.   "
+   echored "  Esta é uma versão experimental e pode conter  "
+   echored "  bugs ou instabilidades. Use por sua conta e   "
+   echored "  risco.                                       "
    echored "                                               "
    echo ""
-   sleep 30
-   echo "Prosseguindo..."
+   sleep 10
 fi
 
 # salva pasta atual
@@ -168,6 +190,7 @@ fi
 DIDRESTORE=""
 
 ## baixa todos os componentes
+echo "Baixando imagens de $IMAGE_PREFIX (versão: $IMAGE_TAG)..."
 docker compose --profile acme pull
 
 if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
@@ -187,7 +210,6 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
    if [ -f ${CURFOLDER}/public_data.tar.gz ]; then
       echo "Encontrado arquivo com dados para a pasta public, iniciando processo de restauração..."
       
-      # CORREÇÃO: Nome do volume Docker
       docker volume create --name rc-chat_backend_public &> ${tmplog}-createpublic.log
       
       if [ $? -gt 0 ]; then
@@ -195,7 +217,6 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
          exit 1
       fi
       
-      # CORREÇÃO: Nome do volume Docker
       cat ${CURFOLDER}/public_data.tar.gz | docker run -i --rm -v rc-chat_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
 
       if [ $? -gt 0 ]; then
@@ -205,12 +226,10 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
       
    fi
    
-   # Evita restaurar backup após carga de dados, embora pouco provável
    DIDRESTORE=1
 fi
 
 if ! [ "${DIDRESTORE}" ]; then
-    # CORREÇÃO: Nome do arquivo de backup
     latest_backup_file=$(ls -t ${CURFOLDER}/rc-chat-backup-*.tar.gz 2>/dev/null | head -n 1)
 fi
 
@@ -218,11 +237,8 @@ if [ -n "${latest_backup_file}" ] && ! [ -d "backups" ]; then
     echo "Backup encontrado. Preparando para restauração..."
 
     mkdir backups
-
-    # Cria um link para o arquivo ou pasta de backup no diretório de instalação
     ln "${latest_backup_file}" backups/
 
-    # Executa o sidekick restore
     echo "" | docker compose run --rm -T sidekick restore
     
     if [ $? -gt 0 ] ; then
