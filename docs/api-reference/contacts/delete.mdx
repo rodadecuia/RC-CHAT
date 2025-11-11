@@ -1,0 +1,35 @@
+---
+title: "Delete a Contact"
+openapi: "DELETE /contacts/{contactId}"
+---
+
+This endpoint deletes a contact from your company's contact list.
+
+## Path Parameters
+
+<ParamField path="contactId" type="integer" required>
+  The unique identifier of the contact you want to delete.
+</ParamField>
+
+## Response
+
+A successful deletion will return a `200 OK` status code with a confirmation message.
+
+<ResponseField name="message" type="string">
+  A confirmation message, e.g., "Contact deleted".
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X DELETE 'https://your-domain.com/api/contacts/3' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "message": "Contact deleted"
+}
+```
+</ResponseExample>

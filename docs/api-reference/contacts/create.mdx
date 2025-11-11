@@ -1,0 +1,77 @@
+---
+title: "Create a Contact"
+openapi: "POST /contacts"
+---
+
+This endpoint creates a new contact in your company's contact list.
+
+## Body Parameters
+
+<ParamField body="name" type="string" required>
+  The name of the new contact.
+</ParamField>
+
+<ParamField body="number" type="string" required>
+  The phone number of the new contact. Must contain only digits.
+</ParamField>
+
+<ParamField body="email" type="string">
+  The email address of the new contact.
+</ParamField>
+
+<ParamField body="isGroup" type="boolean" default="false">
+  Set to `true` if the contact is a group.
+</ParamField>
+
+## Response
+
+The response will be the newly created contact object.
+
+<ResponseField name="id" type="integer">
+  The unique identifier for the contact.
+</ResponseField>
+<ResponseField name="name" type="string">
+  The name of the contact.
+</ResponseField>
+<ResponseField name="number" type="string">
+  The contact's phone number.
+</ResponseField>
+<ResponseField name="email" type="string">
+  The contact's email address.
+</ResponseField>
+<ResponseField name="isGroup" type="boolean">
+  Indicates if the contact is a group.
+</ResponseField>
+<ResponseField name="createdAt" type="string (date-time)">
+  The timestamp when the contact was created.
+</ResponseField>
+<ResponseField name="updatedAt" type="string (date-time)">
+  The timestamp when the contact was last updated.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X POST 'https://your-domain.com/api/contacts' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Michael Johnson",
+    "number": "5551234567",
+    "email": "michael.j@example.com"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "id": 3,
+  "name": "Michael Johnson",
+  "number": "5551234567",
+  "email": "michael.j@example.com",
+  "isGroup": false,
+  "createdAt": "2023-10-28T12:00:00.000Z",
+  "updatedAt": "2023-10-28T12:00:00.000Z"
+}
+```
+</ResponseExample>

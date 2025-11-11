@@ -1,0 +1,57 @@
+---
+title: "API Introduction"
+---
+
+Welcome to the RC-CHAT API documentation. Our API allows you to interact with the RC-CHAT platform programmatically, enabling you to manage contacts, tickets, messages, and more.
+
+## Base URL
+
+All API endpoints are relative to the following base URL:
+
+```
+https://your-domain.com/api
+```
+
+## Authentication
+
+All requests to the RC-CHAT API must be authenticated. We use a Bearer Token authentication scheme.
+
+You need to include an `Authorization` header in all your requests with a valid API token.
+
+```
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+You can generate and manage your API tokens from the user profile section within the RC-CHAT application.
+
+### Example Authenticated Request
+
+```bash
+curl -X GET 'https://your-domain.com/api/contacts' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN'
+```
+
+## Common Concepts
+
+### Pagination
+
+Endpoints that return a list of items (like listing contacts or tickets) are paginated. You can control the pagination using the following query parameters:
+
+- `pageNumber`: The page you want to retrieve. Defaults to `1`.
+
+The response for a paginated endpoint will typically include the following fields:
+- `count`: The total number of items available.
+- `hasMore`: A boolean indicating if there are more pages of results.
+
+### Error Responses
+
+If a request fails, the API will return a standard error response in JSON format with an appropriate HTTP status code.
+
+**Example Error Response (404 Not Found):**
+
+```json
+{
+  "error": "Not Found",
+  "message": "Resource not found."
+}
+```

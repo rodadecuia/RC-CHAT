@@ -1,0 +1,93 @@
+---
+title: "List Contacts"
+openapi: "GET /contacts"
+---
+
+<Note>
+This endpoint supports pagination. See the [API Introduction](/api-reference/introduction) for more details.
+</Note>
+
+This endpoint retrieves a paginated list of all contacts for your company.
+
+## Query Parameters
+
+<ParamField path="searchParam" type="string">
+  A search term to filter contacts by name or number. The search is case-insensitive and ignores accents.
+</ParamField>
+
+<ParamField path="pageNumber" type="string" default="1">
+  The page number to retrieve.
+</ParamField>
+
+## Response
+
+<ResponseField name="contacts" type="array">
+  An array of contact objects.
+  <Expandable title="properties">
+    <ResponseField name="id" type="integer">
+      The unique identifier for the contact.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The name of the contact.
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      The contact's phone number.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The contact's email address.
+    </ResponseField>
+    <ResponseField name="isGroup" type="boolean">
+      Indicates if the contact is a group.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string (date-time)">
+      The timestamp when the contact was created.
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string (date-time)">
+      The timestamp when the contact was last updated.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  The total number of contacts that match the query.
+</ResponseField>
+
+<ResponseField name="hasMore" type="boolean">
+  Indicates if there are more pages of results.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X GET 'https://your-domain.com/api/contacts?pageNumber=1' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "contacts": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "number": "1234567890",
+      "email": "john.doe@example.com",
+      "isGroup": false,
+      "createdAt": "2023-10-27T10:00:00.000Z",
+      "updatedAt": "2023-10-27T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "number": "0987654321",
+      "email": "jane.smith@example.com",
+      "isGroup": false,
+      "createdAt": "2023-10-26T15:30:00.000Z",
+      "updatedAt": "2023-10-26T15:30:00.000Z"
+    }
+  ],
+  "count": 2,
+  "hasMore": false
+}
+```
+</ResponseExample>

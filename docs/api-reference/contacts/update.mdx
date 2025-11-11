@@ -1,0 +1,79 @@
+---
+title: "Update a Contact"
+openapi: "PUT /contacts/{contactId}"
+---
+
+This endpoint updates the details of an existing contact.
+
+## Path Parameters
+
+<ParamField path="contactId" type="integer" required>
+  The unique identifier of the contact you want to update.
+</ParamField>
+
+## Body Parameters
+
+You can provide any of the following fields to update. Fields that are not provided will not be changed.
+
+<ParamField body="name" type="string">
+  The new name for the contact.
+</ParamField>
+
+<ParamField body="number" type="string">
+  The new phone number for the contact.
+</ParamField>
+
+<ParamField body="email" type="string">
+  The new email address for the contact.
+</ParamField>
+
+## Response
+
+The response will be the updated contact object.
+
+<ResponseField name="id" type="integer">
+  The unique identifier for the contact.
+</ResponseField>
+<ResponseField name="name" type="string">
+  The updated name of the contact.
+</ResponseField>
+<ResponseField name="number" type="string">
+  The updated phone number of the contact.
+</ResponseField>
+<ResponseField name="email" type="string">
+  The updated email address of the contact.
+</ResponseField>
+<ResponseField name="isGroup" type="boolean">
+  Indicates if the contact is a group.
+</ResponseField>
+<ResponseField name="createdAt" type="string (date-time)">
+  The timestamp when the contact was created.
+</ResponseField>
+<ResponseField name="updatedAt" type="string (date-time)">
+  The timestamp when the contact was last updated.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X PUT 'https://your-domain.com/api/contacts/3' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "michael.johnson@new-example.com"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "id": 3,
+  "name": "Michael Johnson",
+  "number": "5551234567",
+  "email": "michael.johnson@new-example.com",
+  "isGroup": false,
+  "createdAt": "2023-10-28T12:00:00.000Z",
+  "updatedAt": "2023-10-28T12:05:00.000Z"
+}
+```
+</ResponseExample>
