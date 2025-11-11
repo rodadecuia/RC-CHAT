@@ -1,4 +1,5 @@
 import gracefulShutdown from "http-graceful-shutdown";
+import ngrok from "ngrok";
 import app from "./app";
 import { initIO } from "./libs/socket";
 import { logger } from "./utils/logger";
@@ -57,6 +58,23 @@ i18nReady.then(() => {
     logger.info(`Server is listening on port: ${process.env.PORT}`);
 
     await startServer();
+
+    // Start Ngrok tunnel if enabled
+    if (process.env.NGROK_ENABLED === "true") {
+      if (!process.env.NGROK_TOKEN) {
+        logger.warn("Ngrok is enabled, but NGROK_TOKEN is not set. Tunnel may fail.");
+      }
+      try {
+        const url = await ngrok.connect({
+          addr: process.env.PORT,
+          authtoken: process.env.NGROK_TOKEN
+        });
+        logger.info(`Ngrok tunnel established at: ${url}`);
+        logger.info(`Use this URL for webhooks: ${url}/api/webhooks`);
+      } catch (error) {
+        logger.error({ err: error }, "Error starting Ngrok tunnel");
+      }
+    }
   });
 
   initIO(server);
@@ -67,6 +85,7 @@ i18nReady.then(() => {
     timeout: 30000,
     onShutdown: async () => {
       logger.info("Shutdown initiated. Cleaning up...");
+      await ngrok.disconnect();
     },
     finally: () => {
       logger.info("Server has shut down.");
