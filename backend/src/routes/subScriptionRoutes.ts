@@ -1,17 +1,13 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
-
 import * as SubscriptionController from "../controllers/SubscriptionController";
 
 const subscriptionRoutes = express.Router();
+
 subscriptionRoutes.post(
-  "/subscription",
+  "/subscriptions",
   isAuth,
-  SubscriptionController.createSubscription
-);
-subscriptionRoutes.post(
-  "/subscription/ticketz/webhook/:type?",
-  SubscriptionController.webhook
+  SubscriptionController.store
 );
 
 export default subscriptionRoutes;

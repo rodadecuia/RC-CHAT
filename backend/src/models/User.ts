@@ -21,7 +21,8 @@ import Queue from "./Queue";
 import UserQueue from "./UserQueue";
 import Company from "./Company";
 import QuickMessage from "./QuickMessage";
-import UserSocketSession from "./UserSocketSession"; // Importação da nova model
+import UserSocketSession from "./UserSocketSession";
+import WebpushSubscription from "./WebpushSubscription";
 
 @Table
 class User extends Model<User> {
@@ -83,7 +84,13 @@ class User extends Model<User> {
     onUpdate: "CASCADE",
     onDelete: "CASCADE"
   })
-  socketSessions: UserSocketSession[]; // Nova associação
+  socketSessions: UserSocketSession[];
+
+  @HasMany(() => WebpushSubscription, {
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE"
+  })
+  webpushSubscriptions: WebpushSubscription[];
 
   @BeforeUpdate
   @BeforeCreate

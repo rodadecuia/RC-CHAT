@@ -25,7 +25,7 @@ import campaignSettingRoutes from "./campaignSettingRoutes";
 import announcementRoutes from "./announcementRoutes";
 import chatRoutes from "./chatRoutes";
 import invoiceRoutes from "./invoicesRoutes";
-import subscriptionRoutes from "./subScriptionRoutes";
+import subscriptionRoutes from "./subscriptionRoutes"; // Corrigido
 import ticketTagRoutes from "./ticketTagRoutes";
 import pwaRoutes from "./pwaRoutes";
 import versionRoutes from "./versionRoutes";
@@ -41,7 +41,6 @@ routes.use(settingRoutes);
 routes.use(contactRoutes);
 routes.use(ticketRoutes);
 routes.use(whatsappRoutes);
-routes.use(messageRoutes);
 routes.use(messageRoutes);
 routes.use(whatsappSessionRoutes);
 routes.use(queueRoutes);

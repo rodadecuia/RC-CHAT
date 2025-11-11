@@ -6,6 +6,8 @@ import OldMessage from "../../models/OldMessage";
 import Ticket from "../../models/Ticket";
 import Whatsapp from "../../models/Whatsapp";
 import { logger } from "../../utils/logger";
+import SendWebpushNotificationService from "../WebpushSubscriptionServices/SendWebpushNotificationService";
+import WebpushSubscription from "../../models/WebpushSubscription";
 
 interface MessageData {
   id: string;
@@ -106,6 +108,22 @@ const CreateMessageService = async ({
     throw new Error("ERR_CREATING_MESSAGE");
   }
 
+  // Enviar notificação push
+  if (!messageData.fromMe && message.ticket.userId) {
+    const subscriptions = await WebpushSubscription.findAll({
+      where: { userId: message.ticket.userId }
+    });
+
+    for (const subscription of subscriptions) {
+      const payload = JSON.stringify({
+        title: `Nova mensagem de ${message.ticket.contact.name}`,
+        body: message.body,
+        url: `/tickets/${message.ticket.id}`
+      });
+      await SendWebpushNotificationService({ subscription, payload });
+    }
+  }
+
   if (!(await checkCompanyCompliant(companyId))) {
     return message;
   }
@@ -115,7 +133,7 @@ const CreateMessageService = async ({
   if (!skipWebsocket) {
     websocketCreateMessage(message);
   }
-  
+
   io.to(`company-${companyId}-mainchannel`).emit(
     `company-${companyId}-contact`,
     {
