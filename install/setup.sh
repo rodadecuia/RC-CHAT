@@ -3,18 +3,32 @@
 # Função para mostrar a mensagem de uso
 show_usage() {
     echo -e "Uso: \n"
+<<<<<<< Updated upstream
     echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s [opções] <frontend_host> <email>\n"
+=======
+    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s [opções] <frontend_host> <email>"
+    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s [opções] <backend_host> <frontend_host> <email>\n"
+>>>>>>> Stashed changes
     echo -e "Opções:"
     echo -e "  --beta                  Instala a versão experimental (tag 'beta')."
     echo -e "  --dockerhub             Usa as imagens do Docker Hub em vez do GitHub (ghcr.io)."
     echo -e "  --branch <branchname>   Faz checkout de uma branch específica do repositório git.\n"
     echo -e "Exemplos: \n"
+<<<<<<< Updated upstream
     echo -e "  Instalação Padrão (Produção do GHCR):"
     echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s rc-chat.exemplo.com.br email@exemplo.com.br\n"
     echo -e "  Instalação da Versão Beta (do GHCR):"
     echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
     echo -e "  Instalação Padrão (do Docker Hub):"
     echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s --dockerhub rc-chat.exemplo.com.br email@exemplo.com.br\n"
+=======
+    echo -e "  Instalação Padrão (Domínio Único):"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "  Instalação Padrão (Domínios Separados):"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s api.exemplo.com.br rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "  Instalação da Versão Beta:"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
+>>>>>>> Stashed changes
 }
 
 # Função para mensagem em vermelho
@@ -33,7 +47,7 @@ echoblue() {
 
 # Verifica se está rodando usando o bash
 if ! [ -n "$BASH_VERSION" ]; then
-   echo "Este script deve ser executado como utilizando o bash\n\n" 
+   echo "Este script deve ser executado como utilizando o bash\n\n"
    show_usage
    exit 1
 fi
@@ -67,15 +81,28 @@ done
 
 # Verifica se está rodando como root
 if [[ $EUID -ne 0 ]]; then
-   echo "Este script deve ser executado como root" 
+   echo "Este script deve ser executado como root"
    exit 1
 fi
 
-# Atribui os parâmetros restantes
-frontend_host=$1
-email=$2
+# *** INÍCIO DA CORREÇÃO DE LÓGICA ***
 
-# Verifica se os parâmetros principais estão corretos
+# Define backend_host e backend_path com base no número de argumentos
+if [ -n "$3" ] ; then
+    # Modo de 3 argumentos: backend_host, frontend_host, email
+    backend_host="$1"
+    frontend_host="$2"
+    email="$3"
+    backend_path=""
+else
+    # Modo de 2 argumentos: host_unico, email
+    backend_host="$1"
+    frontend_host="$1"
+    email="$2"
+    backend_path="\\/backend"
+fi
+
+# Agora, verifique se os parâmetros estão corretos
 if [ -z "$frontend_host" ] || [ -z "$email" ]; then
     show_usage
     exit 1
@@ -88,16 +115,7 @@ if ! [[ $email =~ $emailregex ]] ; then
     exit 1
 fi
 
-# Define backend_host e backend_path
-if [ -n "$3" ] ; then
-    backend_host="$1"
-    backend_path=""
-    frontend_host="$2"
-    email="$3"
-else 
-    backend_host="$frontend_host"
-    backend_path="\\/backend"
-fi
+# *** FIM DA CORREÇÃO DE LÓGICA ***
 
 echo ""
 echoblue "                                               "
@@ -112,6 +130,9 @@ echo ""
 echoblue "  Configuração da Instalação:                  "
 echoblue "  - Registro da Imagem: $IMAGE_PREFIX"
 echoblue "  - Versão da Imagem  : $IMAGE_TAG"
+[ -n "$backend_path" ] && echoblue "  - Modo              : Domínio Único" || echoblue "  - Modo              : Domínios Separados"
+echoblue "  - Frontend Host     : $frontend_host"
+echoblue "  - Backend Host      : $backend_host"
 echoblue "                                               "
 echo ""
 
@@ -198,34 +219,34 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
 
    [ -d retrieve ] || mkdir retrieve
    cp ${CURFOLDER}/retrieved_data.tar.gz retrieve
-   
+
    tmplog=/tmp/loadretrieved-$$-${RANDOM}
    echo "" | docker compose run --rm -T -v ${PWD}/retrieve:/retrieve backend &> ${tmplog}-retrieve.log
-   
+
    if [ $? -gt 0 ] ; then
       echo -e "\n\nErro ao carregar dados de retrieved_data.tar.gz.\n\nLog de erros pode ser encontrado em ${tmplog}-retrieve.log\n\n"
       exit 1
    fi
-   
+
    if [ -f ${CURFOLDER}/public_data.tar.gz ]; then
       echo "Encontrado arquivo com dados para a pasta public, iniciando processo de restauração..."
-      
+
       docker volume create --name rc-chat_backend_public &> ${tmplog}-createpublic.log
-      
+
       if [ $? -gt 0 ]; then
          echo -e "\n\nErro ao criar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-createpublic.log\n\n"
          exit 1
       fi
-      
+
       cat ${CURFOLDER}/public_data.tar.gz | docker run -i --rm -v rc-chat_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
 
       if [ $? -gt 0 ]; then
          echo -e "\n\nErro ao restaurar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-restorepublic.log\n\n"
          exit 1
       fi
-      
+
    fi
-   
+
    DIDRESTORE=1
 fi
 
@@ -240,12 +261,12 @@ if [ -n "${latest_backup_file}" ] && ! [ -d "backups" ]; then
     ln "${latest_backup_file}" backups/
 
     echo "" | docker compose run --rm -T sidekick restore
-    
+
     if [ $? -gt 0 ] ; then
       echo "Falha ao restaurar backup"
       exit 1
     fi
-    
+
     DIDRESTORE=1
 fi
 
@@ -265,7 +286,7 @@ alguns minutos.
 Após isso você pode acessar o RC-CHAT pela URL
 
         https://${frontend_host}
-        
+
 EOF
 
 [ "${DIDRESTORE}" ] || cat << EOF
