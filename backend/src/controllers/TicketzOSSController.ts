@@ -29,7 +29,7 @@ export async function store(req: Request, res: Response): Promise<Response> {
     companyId: 1
   });
 
-  const frontendUrl = URL.parse(process.env.FRONTEND_URL);
+  const frontendUrl = new URL(process.env.FRONTEND_URL);
   let { hostname } = frontendUrl;
   if (frontendUrl.protocol === "http:") {
     let uniqueInstallId = await cacheLayer.get("uniqueInstallId");
@@ -45,7 +45,7 @@ export async function store(req: Request, res: Response): Promise<Response> {
     name: req.body.name,
     whatsapp: req.body.whatsapp,
     email: process.env.EMAIL_ADDRESS || "admin@ticketz.host",
-    version: GitInfo.tagName || GitInfo.branchName || GitInfo.commitHash
+    version: GitInfo.branchName || GitInfo.commitHash
   };
 
   await axios.post(process.env.TICKETZ_REGISTRY_URL, registryData);
