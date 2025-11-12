@@ -12,47 +12,89 @@ import { createAccessToken, createRefreshToken } from "../helpers/CreateTokens";
 import Company from "../models/Company";
 import Setting from "../models/Setting";
 import Translation from "../models/Translation";
+import { validateClientProductLogin } from "../services/WhmcsService";
+import { logger } from "../utils/logger";
+import Plan from "../models/Plan";
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
 
-  const langs = await Translation.findAll({
-    attributes: ["language"],
-    group: ["language"]
-  });
+  try {
+    // --- TENTATIVA 1: LOGIN NORMAL (OPERADORES, ADMINS) ---
+    const { token, serializedUser, refreshToken } = await AuthUserService({
+      email,
+      password
+    });
 
-  const availableLanguages = langs.map(l => l.language.replace(/_/g, "-"));
+    SendRefreshToken(res, refreshToken);
 
-  const language = (req.acceptsLanguages(availableLanguages) || null)?.replace(
-    /-/g,
-    "_"
-  );
-
-  const { token, serializedUser, refreshToken } = await AuthUserService({
-    email,
-    password,
-    language
-  });
-
-  SendRefreshToken(res, refreshToken);
-
-  const io = getIO();
-  io.to(`user-${serializedUser.id}`).emit(
-    `company-${serializedUser.companyId}-auth`,
-    {
-      action: "update",
-      user: {
-        id: serializedUser.id,
-        email: serializedUser.email,
-        companyId: serializedUser.companyId
+    const io = getIO();
+    io.to(`user-${serializedUser.id}`).emit(
+      `company-${serializedUser.companyId}-auth`,
+      {
+        action: "update",
+        user: {
+          id: serializedUser.id,
+          email: serializedUser.email,
+          companyId: serializedUser.companyId
+        }
       }
-    }
-  );
+    );
 
-  return res.status(200).json({
-    token,
-    user: serializedUser
-  });
+    return res.status(200).json({
+      token,
+      user: serializedUser
+    });
+
+  } catch (err) {
+    // Se o login normal falhar, não retorna erro ainda.
+    logger.warn(`Normal login failed for ${email}. Attempting WHMCS fallback...`);
+
+    try {
+      // --- TENTATIVA 2: FALLBACK PARA LOGIN VIA WHMCS (CLIENTE FINAL) ---
+      const { clientId, productId: whmcsProductId } = await validateClientProductLogin(email, password);
+
+      // Encontrar a empresa no RC-CHAT correspondente ao clientId do WHMCS
+      const company = await Company.findOne({ where: { whmcsClientId: clientId } });
+      if (!company) {
+        throw new AppError("WHMCS client found, but no matching company in RC-CHAT.", 404);
+      }
+
+      // Sincronizar o plano
+      const plan = await Plan.findOne({ where: { whmcsProductId } });
+      if (plan && company.planId !== plan.id) {
+        logger.info(`Syncing plan for company ${company.id}. Old: ${company.planId}, New: ${plan.id}`);
+        company.planId = plan.id;
+        await company.save();
+      }
+
+      // Encontrar o usuário admin daquela empresa
+      const user = await User.findOne({
+        where: { companyId: company.id, profile: "admin" },
+        order: [["createdAt", "ASC"]]
+      });
+      if (!user) {
+        throw new AppError("Company found, but no admin user configured.", 404);
+      }
+
+      // Gerar a sessão para o usuário admin encontrado
+      const token = createAccessToken(user);
+      const refreshToken = createRefreshToken(user);
+      const serializedUser = await SerializeUser(user);
+
+      SendRefreshToken(res, refreshToken);
+
+      return res.status(200).json({
+        token,
+        user: serializedUser
+      });
+
+    } catch (whmcsErr) {
+      // Se o fallback do WHMCS também falhar, agora sim retornamos o erro.
+      logger.warn({ err: whmcsErr.message }, `WHMCS fallback failed for ${email}.`);
+      throw new AppError("ERR_INVALID_CREDENTIALS", 401);
+    }
+  }
 };
 
 export const update = async (
