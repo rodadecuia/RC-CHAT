@@ -8,21 +8,19 @@ RC-CHAT é um comunicador com recursos de CRM e helpdesk que utiliza o WhatsApp 
 
 Este projeto tem por objetivo melhorar e manter abertas as atualizações sobre o RC-CHAT SaaS publicado, com foco principal na qualidade da aplicação e na facilidade de instalação e utilização.
 
-## Guia de Instalação Automatizada
+## Guia de Instalação e Atualização
 
-Este guia descreve como instalar o RC-CHAT em um servidor de forma automatizada usando nosso script de instalação. O script cuida da configuração do ambiente, do Docker e da inicialização dos serviços.
+Este guia descreve como instalar e atualizar o RC-CHAT em um servidor de forma automatizada. O script é inteligente e interativo, cuidando de toda a configuração do ambiente.
 
 ### Pré-requisitos
 
-Antes de executar o script, certifique-se de que você tem:
-
 1.  **Um Servidor (VPS):** Uma máquina virtual limpa com uma distribuição Linux recente. **Ubuntu 22.04 LTS** é recomendado.
-2.  **Registros DNS Configurados:** Você precisa que o domínio (ou subdomínio) que você vai usar para o sistema esteja apontando para o endereço de IP do seu servidor. Por exemplo, se você vai acessar o sistema em `rc-chat.meudominio.com`, crie um **registro DNS do tipo A** para `rc-chat.meudominio.com` apontando para o IP do seu servidor.
+2.  **Registros DNS Configurados:** Você precisa que o domínio (ou subdomínio) que você vai usar para o sistema esteja apontando para o endereço de IP do seu servidor.
 3.  **Acesso Root:** O script precisa ser executado com privilégios de superusuário (`sudo`).
 
-### Processo de Instalação em 2 Passos
+### Processo de Instalação (Primeira Vez)
 
-Para maior segurança e clareza, a instalação é feita em duas etapas:
+A instalação é feita em 2 passos simples:
 
 #### 1º Passo: Baixar o Script de Instalação
 
@@ -32,87 +30,61 @@ Conecte-se ao seu servidor via SSH e baixe o script de instalação com o seguin
 curl -sSLO https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh
 ```
 
-#### 2º Passo: Executar o Script
+#### 2º Passo: Executar o Assistente de Instalação
 
-Primeiro, dê permissão de execução ao script e, em seguida, execute-o com `sudo`, passando as opções e parâmetros necessários.
+Dê permissão de execução ao script e rode-o com `sudo`. O script irá iniciar um assistente interativo que fará as perguntas necessárias para configurar o sistema.
 
 ```sh
 chmod +x setup.sh
-sudo ./setup.sh [opções] <host_frontend> <email>
+sudo ./setup.sh
 ```
 
-##### Parâmetros Obrigatórios
+O assistente irá perguntar sobre:
+-   O modo de domínio (único ou separado para backend/frontend).
+-   Os nomes dos domínios.
+-   Seu e-mail (para o certificado SSL).
+-   A versão a ser instalada (Produção ou Beta).
+-   A origem das imagens (GitHub ou Docker Hub).
 
--   `<host_frontend>`: O domínio principal que você usará para acessar o sistema. Ex: `rc-chat.meudominio.com`.
--   `<email>`: Seu endereço de e-mail. Ele será usado para o login inicial e para gerar os certificados de segurança SSL/TLS com Let's Encrypt.
+Após confirmar as configurações, o script cuidará de todo o resto.
 
-##### Opções (Flags)
+### Como Atualizar uma Instalação Existente
 
-Você pode personalizar a instalação usando as seguintes flags opcionais:
+Manter seu sistema atualizado é ainda mais fácil.
 
-| Flag          | Descrição                                                                                                                            |
-| :------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `--beta`      | Instala a versão de testes (`beta`) em vez da versão estável (`latest`). Ideal para testar novos recursos antes de irem para produção. |
-| `--dockerhub` | Puxa as imagens Docker do **Docker Hub** (`rodadecuiaapp`) em vez do registro padrão do **GitHub** (`ghcr.io/rodadecuia`).            |
-| `--branch`    | (Avançado) Faz o checkout de uma branch específica do repositório Git antes da instalação. Útil para desenvolvedores.                 |
-
-### Exemplos de Uso
-
-Aqui estão alguns exemplos para os cenários mais comuns (lembre-se de executar o `curl` e o `chmod` antes).
-
-#### 1. Instalação Padrão (Produção)
-
-Esta é a instalação recomendada para a maioria dos usuários. Ela usa a imagem `latest` (estável) do registro do GitHub (GHCR).
+Basta executar o mesmo comando no seu servidor (não é necessário baixar o script novamente se você já o tem):
 
 ```sh
-sudo ./setup.sh rc-chat.meudominio.com admin@meudominio.com
+sudo ./setup.sh
 ```
 
-#### 2. Instalação da Versão Beta
+O script irá detectar sua instalação existente, ler suas configurações atuais e baixar as últimas imagens para atualizar o sistema, preservando todos os seus dados.
 
-Para testar as funcionalidades mais recentes que ainda estão em desenvolvimento.
+#### Forçando Mudanças na Atualização
 
+Você pode usar flags para mudar a versão ou a origem das imagens durante uma atualização.
+
+**Exemplo 1: Mudar para a versão Beta**
 ```sh
-sudo ./setup.sh --beta rc-chat.meudominio.com admin@meudominio.com
+sudo ./setup.sh --beta
 ```
 
-#### 3. Instalação Usando o Docker Hub
-
-Caso o registro do GitHub (GHCR) esteja indisponível ou você prefira usar o Docker Hub.
-
+**Exemplo 2: Mudar para usar imagens do Docker Hub**
 ```sh
-sudo ./setup.sh --dockerhub rc-chat.meudominio.com admin@meudominio.com
-```
-
-#### 4. Instalação da Versão Beta a partir do Docker Hub
-
-Você pode combinar as flags para cenários mais específicos.
-
-```sh
-sudo ./setup.sh --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
+sudo ./setup.sh --dockerhub
 ```
 
 ### O que o Script Faz?
 
-1.  **Verifica o Ambiente:** Garante que Docker e Git estão instalados.
-2.  **Clona ou Atualiza o Repositório:** Baixa a versão mais recente do código do RC-CHAT.
-3.  **Configura o Ambiente:** Cria o arquivo `.env` com base nos domínios e e-mail que você forneceu.
-4.  **Baixa as Imagens Docker:** Puxa as imagens corretas (`latest` ou `beta`) do registro correto (`GHCR` ou `Docker Hub`) com base nas flags que você usou.
-5.  **Inicia os Serviços:** Sobe todos os contêineres necessários (backend, frontend, banco de dados, etc.) usando `docker compose`.
-6.  **Gera Certificados SSL:** Configura o Nginx Proxy para obter certificados SSL/TLS gratuitos e renová-los automaticamente.
+1.  **Detecta o Modo:** Verifica se é uma nova instalação ou uma atualização.
+2.  **Coleta Informações:** Faz perguntas (na 1ª vez) ou lê o `.env` (nas atualizações).
+3.  **Instala Dependências:** Garante que Docker e Git estão instalados.
+4.  **Configura o Ambiente:** Baixa os arquivos `docker-compose.yml` e `.env` e os configura corretamente.
+5.  **Baixa as Imagens Docker:** Puxa a versão correta (`latest` ou `beta`) da origem correta (`GHCR` ou `Docker Hub`).
+6.  **Inicia os Serviços:** Sobe todos os contêineres necessários usando `docker compose`.
+7.  **Gera Certificados SSL:** Configura o Nginx Proxy para obter certificados SSL/TLS gratuitos e renová-los automaticamente.
 
-Após a conclusão, o sistema estará acessível na URL fornecida. O login inicial será o e-mail informado e a senha padrão é `123456`.
-
-### Como Atualizar uma Instalação Existente
-
-Para atualizar sua instalação para a versão mais recente, **basta executar os mesmos 2 passos de instalação novamente**. O script é inteligente e irá:
-
-1.  Baixar a versão mais recente do script.
-2.  Puxar a versão mais recente do código do repositório Git.
-3.  Baixar as imagens Docker mais recentes (`latest` ou `beta`).
-4.  Reiniciar os contêineres com a nova versão.
-
-Seus dados e configurações no banco de dados serão preservados.
+Após a conclusão, o sistema estará acessível na URL fornecida. Em uma nova instalação, a senha padrão é `123456`.
 
 ## Rodando o projeto a partir do Código Fonte (Desenvolvimento)
 

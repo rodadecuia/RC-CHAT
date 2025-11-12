@@ -1,306 +1,222 @@
 #!/bin/bash
 
-# Função para mostrar a mensagem de uso
+# --- Funções de Utilidade ---
 show_usage() {
     echo -e "Uso: \n"
-    echo -e "  ./setup.sh [opções] <frontend_host> <email>"
-    echo -e "  ./setup.sh [opções] <backend_host> <frontend_host> <email>\n"
-    echo -e "Opções:"
-    echo -e "  --beta                  Instala a versão experimental (tag 'beta')."
-    echo -e "  --dockerhub             Usa as imagens do Docker Hub em vez do GitHub (ghcr.io)."
-    echo -e "  --branch <branchname>   Faz checkout de uma branch específica do repositório git.\n"
-    echo -e "Exemplos: \n"
-    echo -e "  Instalação Padrão (Domínio Único):"
-    echo -e "    sudo ./setup.sh rc-chat.exemplo.com.br email@exemplo.com.br\n"
-    echo -e "  Instalação Padrão (Domínios Separados):"
-    echo -e "    sudo ./setup.sh api.exemplo.com.br rc-chat.exemplo.com.br email@exemplo.com.br\n"
-    echo -e "  Instalação da Versão Beta:"
-    echo -e "    sudo ./setup.sh --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "  Para instalar ou atualizar, execute:"
+    echo -e "    sudo ./setup.sh [opções]\n"
+    echo -e "Opções (principalmente para atualizações):"
+    echo -e "  --beta                  Muda a instalação para a versão experimental (beta)."
+    echo -e "  --dockerhub             Muda a origem das imagens para o Docker Hub."
+    echo -e "  --branch <branchname>   Força o uso de uma branch específica do repositório git.\n"
+    echo -e "Na primeira execução, o script será interativo e fará as perguntas necessárias."
 }
 
-# Função para mensagem em vermelho
 echored() {
-   echo -ne "  \033[41m\033[37m\033[1m"
-   echo -n "  $1"
-   echo -e "  \033[0m"
+   echo -ne "  \033[41m\033[37m\033[1m"; echo -n "  $1"; echo -e "  \033[0m"
 }
 
-# Função para mensagem em azul
 echoblue() {
-   echo -ne "  \033[44m\033[37m\033[1m"
-   echo -n "  $1"
-   echo -e "  \033[0m"
+   echo -ne "  \033[44m\033[37m\033[1m"; echo -n "  $1"; echo -e "  \033[0m"
 }
+
+# --- Início do Script ---
 
 # Verifica se está rodando usando o bash
 if ! [ -n "$BASH_VERSION" ]; then
-   echo "Este script deve ser executado como utilizando o bash\n\n"
+   echo "Este script deve ser executado como utilizando o bash (use: sudo bash setup.sh)"
    show_usage
    exit 1
 fi
 
-# Inicializa variáveis com valores padrão
+# Verifica se está rodando como root
+if [[ $EUID -ne 0 ]]; then
+   echo "Este script deve ser executado como root (use: sudo ./setup.sh)"
+   exit 1
+fi
+
+# --- Variáveis e Detecção de Modo ---
+INSTALL_DIR="/opt/rc-chat"
+IS_UPDATE="false"
+
+# Define valores padrão que podem ser sobrescritos por flags
 BRANCH=""
 export IMAGE_TAG="latest"
 export IMAGE_PREFIX="ghcr.io/rodadecuia"
 
-# Processa os argumentos de flag
+# Processa flags para permitir overrides na atualização
 while [[ "$1" =~ ^- ]]; do
   case $1 in
-    --beta )
-      export IMAGE_TAG="beta"
-      shift
-      ;;
-    --dockerhub )
-      export IMAGE_PREFIX="rodadecuiaapp"
-      shift
-      ;;
-    --branch | -b )
-      BRANCH="$2"
-      shift 2
-      ;;
-    * )
-      show_usage
-      exit 1
-      ;;
+    --beta ) export IMAGE_TAG="beta"; shift ;;
+    --dockerhub ) export IMAGE_PREFIX="rodadecuiaapp"; shift ;;
+    --branch | -b ) BRANCH="$2"; shift 2 ;;
+    * ) show_usage; exit 1 ;;
   esac
 done
 
-# Verifica se está rodando como root
-if [[ $EUID -ne 0 ]]; then
-   echo "Este script deve ser executado como root (use sudo ./setup.sh)"
-   exit 1
+# Verifica se é uma atualização ou nova instalação
+if [ -f "$INSTALL_DIR/.env" ]; then
+    IS_UPDATE="true"
 fi
 
-# Define backend_host e backend_path com base no número de argumentos
-if [ -n "$3" ] ; then
-    # Modo de 3 argumentos: backend_host, frontend_host, email
-    backend_host="$1"
-    frontend_host="$2"
-    email="$3"
-    backend_path=""
+# --- Lógica Principal: Instalação vs. Atualização ---
+
+if [ "$IS_UPDATE" = "true" ]; then
+    ### MODO ATUALIZAÇÃO ###
+    echo "Detectada instalação existente. Iniciando processo de atualização..."
+    cd "$INSTALL_DIR" || exit 1
+    # Carrega as variáveis do .env para obter os hosts e email
+    frontend_host=$(grep -E "^FRONTEND_HOST=" .env | cut -d '=' -f2)
+    backend_host=$(grep -E "^VIRTUAL_HOST=" .env | cut -d '=' -f2)
+    email=$(grep -E "^LETSENCRYPT_EMAIL=" .env | cut -d '=' -f2)
+    
+    if [ "$frontend_host" = "$backend_host" ]; then
+        backend_path="\\/backend"
+    else
+        backend_path=""
+    fi
+
 else
-    # Modo de 2 argumentos: host_unico, email
-    backend_host="$1"
-    frontend_host="$1"
-    email="$2"
-    backend_path="\\/backend"
+    ### MODO NOVA INSTALAÇÃO (INTERATIVO) ###
+    echo "Nenhuma instalação encontrada. Iniciando assistente de configuração..."
+    
+    while true; do
+        read -p "A instalação usará um domínio único ou domínios separados? (1-Único, 2-Separado) [1]: " domain_mode
+        domain_mode=${domain_mode:-1}
+        case $domain_mode in
+            1) backend_path="\\/backend"; break ;;
+            2) backend_path=""; break ;;
+            *) echo "Opção inválida. Por favor, escolha 1 ou 2." ;;
+        esac
+    done
+
+    if [ -z "$backend_path" ]; then
+        read -p "Digite o domínio do Backend (ex: api.meudominio.com): " backend_host
+        read -p "Digite o domínio do Frontend (ex: app.meudominio.com): " frontend_host
+    else
+        read -p "Digite o domínio principal da aplicação (ex: rc-chat.meudominio.com): " frontend_host
+        backend_host=$frontend_host
+    fi
+
+    emailregex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
+    while true; do
+        read -p "Digite seu e-mail (para o certificado SSL): " email
+        if [[ $email =~ $emailregex ]]; then
+            break
+        else
+            echo "Formato de e-mail inválido. Tente novamente."
+        fi
+    done
+
+    while true; do
+        read -p "Qual versão instalar? (1-Produção, 2-Beta) [1]: " version_choice
+        version_choice=${version_choice:-1}
+        case $version_choice in
+            1) export IMAGE_TAG="latest"; break ;;
+            2) export IMAGE_TAG="beta"; break ;;
+            *) echo "Opção inválida. Por favor, escolha 1 ou 2." ;;
+        esac
+    done
+
+    while true; do
+        read -p "De onde baixar as imagens? (1-GitHub/GHCR, 2-Docker Hub) [1]: " registry_choice
+        registry_choice=${registry_choice:-1}
+        case $registry_choice in
+            1) export IMAGE_PREFIX="ghcr.io/rodadecuia"; break ;;
+            2) export IMAGE_PREFIX="rodadecuiaapp"; break ;;
+            *) echo "Opção inválida. Por favor, escolha 1 ou 2." ;;
+        esac
+    done
 fi
 
-# Agora, verifique se os parâmetros estão corretos
-if [ -z "$frontend_host" ] || [ -z "$email" ]; then
-    show_usage
-    exit 1
-fi
-
-emailregex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
-if ! [[ $email =~ $emailregex ]] ; then
-    echo "email inválido"
-    show_usage
-    exit 1
-fi
+# --- Execução Comum ---
 
 echo ""
-echoblue "                                               "
 echoblue "  RC-CHAT - Site oficial https://rc-chat.com   "
-echoblue "                                               "
 echoblue "  Contato Whatsapp: +55 54 36421111            "
 echoblue "                    https://wa.me/555436421111 "
-echoblue "                                               "
-
-# Mensagem sobre o registro e a versão
-echo ""
-echoblue "  Configuração da Instalação:                  "
-echoblue "  - Registro da Imagem: $IMAGE_PREFIX"
-echoblue "  - Versão da Imagem  : $IMAGE_TAG"
-[ -n "$backend_path" ] && echoblue "  - Modo              : Domínio Único" || echoblue "  - Modo              : Domínios Separados"
-echoblue "  - Frontend Host     : $frontend_host"
-echoblue "  - Backend Host      : $backend_host"
-echoblue "                                               "
 echo ""
 
-# Aviso para instalação Beta
-if [ "$IMAGE_TAG" = "beta" ]; then
-   echored "                                               "
-   echored "  ATENÇÃO: Você está instalando a versão BETA.   "
-   echored "  Esta é uma versão experimental e pode conter  "
-   echored "  bugs ou instabilidades. Use por sua conta e   "
-   echored "  risco.                                       "
-   echored "                                               "
-   echo ""
-   sleep 10
-fi
+echoblue "  Resumo da Operação:                        "
+echoblue "  - Operação: $([ "$IS_UPDATE" = "true" ] && echo "Atualização" || echo "Nova Instalação")"
+echoblue "  - Registro: $IMAGE_PREFIX"
+echoblue "  - Versão  : $IMAGE_TAG"
+[ -n "$backend_path" ] && echoblue "  - Modo    : Domínio Único" || echoblue "  - Modo    : Domínios Separados"
+echoblue "  - Frontend: $frontend_host"
+echoblue "  - Backend : $backend_host"
+echo ""
 
-# salva pasta atual
-CURFOLDER=${PWD}
-
-# Passo 2: Instala dependências (Docker e Git)
-which docker > /dev/null || curl -sSL https://get.docker.com | sh
-
-if ! command -v git &> /dev/null; then
-    echo "Git não encontrado. Instalando git..."
-    apt-get update
-    apt-get install -y git
-fi
-
-# Passo 3: Baixa ou atualiza o projeto
-if [ ! -d "rc-chat/.git" ]; then
-    echo "Clonando o repositório RC-CHAT..."
-    rm -rf rc-chat
-    git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat
-    if [ $? -ne 0 ]; then
-        echored "Falha ao clonar o repositório. Verifique sua conexão e permissões."
+if [ "$IS_UPDATE" = "false" ]; then
+    read -p "As configurações estão corretas? Deseja continuar? (S/n): " confirm
+    if [[ ! "$confirm" =~ ^[Ss]$ ]] && [ -n "$confirm" ]; then
+        echo "Instalação cancelada."
         exit 1
     fi
 fi
 
-cd rc-chat
-if [ $? -ne 0 ]; then
-    echored "Não foi possível entrar no diretório 'rc-chat'."
-    exit 1
+if [ "$IMAGE_TAG" = "beta" ]; then
+   echored "  ATENÇÃO: Você está usando a versão BETA.       "
+   echored "  Esta é uma versão experimental.                "
+   sleep 5
 fi
 
-if ! git diff-index --quiet HEAD -- ; then
-  echo "Salvando alterações locais com git stash push"
-  git stash push &> /dev/null
+which docker > /dev/null || curl -sSL https://get.docker.com | sh
+if ! command -v git &> /dev/null; then
+    echo "Git não encontrado. Instalando git..."; apt-get update; apt-get install -y git;
 fi
 
-echo "Atualizando repositório"
-git fetch
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR" || exit 1
 
-if [ -n "${BRANCH}" ] ; then
-  echo "Alterando para a branch ${BRANCH}"
-  if git rev-parse --verify ${BRANCH}; then
-    git checkout ${BRANCH}
-  else
-    if ! git checkout --track origin/$BRANCH; then
-      echo "Erro ao alternar para a branch ${BRANCH}"
-      exit 1
-    fi
-  fi
-fi
+echo "Obtendo arquivos de configuração mais recentes..."
+rm -rf rc-chat-temp
+git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat-temp
+if [ $? -ne 0 ]; then echored "Falha ao obter arquivos de configuração."; exit 1; fi
 
-echo "Atualizando área de trabalho"
-if ! git pull &> pull.log; then
-  echo "Falha ao Atualizar repositório, verifique arquivo pull.log"
-  echo -e "\n\nAlterações precisam ser verificadas manualmente, procure suporte se necessário\n\n"
-  exit 1
-fi
+if [ "$IS_UPDATE" = "false" ]; then cp rc-chat-temp/.env.example ./.env; fi
+cp rc-chat-temp/docker-compose.yml ./docker-compose.yml
+cp rc-chat-temp/install/setup.sh ./setup.sh
+chmod +x ./setup.sh
 
-# Passo 4: Configura os hostnames
-cp .env.example .env
+rm -rf rc-chat-temp
 
-cat .env \
-  | sed -e "s/^FRONTEND_HOST=.*/FRONTEND_HOST=$frontend_host/g" \
-  | sed -e "s/^BACKEND_URL=.*/BACKEND_URL=https:\/\/$backend_host$backend_path/g" \
-  | sed -e "s/^FRONTEND_URL=.*/FRONTEND_URL=https:\/\/$frontend_host/g" \
-  | sed -e "s/^EMAIL_ADDRESS=.*/EMAIL_ADDRESS=$email/g" \
-  | sed -e "s/^VIRTUAL_HOST=.*/VIRTUAL_HOST=$backend_host/g" \
-  | sed -e "s/^LETSENCRYPT_HOST=.*/LETSENCRYPT_HOST=$backend_host/g" \
-  | sed -e "s/^LETSENCRYPT_EMAIL=.*/LETSENCRYPT_EMAIL=$email/g" \
-  > .env.tmp && mv .env.tmp .env
+sed -i "s|^FRONTEND_HOST=.*|FRONTEND_HOST=$frontend_host|" ./.env
+sed -i "s|^BACKEND_URL=.*|BACKEND_URL=https:\/\/$backend_host$backend_path|" ./.env
+sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https:\/\/$frontend_host|" ./.env
+sed -i "s|^EMAIL_ADDRESS=.*|EMAIL_ADDRESS=$email|" ./.env
+sed -i "s|^VIRTUAL_HOST=.*|VIRTUAL_HOST=$backend_host|" ./.env
+sed -i "s|^LETSENCRYPT_HOST=.*|LETSENCRYPT_HOST=$backend_host|" ./.env
+sed -i "s|^LETSENCRYPT_EMAIL=.*|LETSENCRYPT_EMAIL=$email|" ./.env
 
-## Adiciona configurações específicas para o backend se o backend_path for vazio (host separado)
-if [ -z "$backend_path" ] ; then
-  cat >> .env << EOF
-# Configurações para backend em host separado
-BACKEND_HOST=$backend_host
-BACKEND_PROTOCOL=https
-EOF
-fi
+mkdir -p backups
 
-DIDRESTORE=""
-
-## baixa todos os componentes
 echo "Baixando imagens de $IMAGE_PREFIX (versão: $IMAGE_TAG)..."
 docker compose --profile acme pull
-
-if [ -f "${CURFOLDER}/retrieved_data.tar.gz" ]; then
-   echo "Dados de importação encotrados, iniciando o processo de carga..."
-
-   [ -d retrieve ] || mkdir retrieve
-   cp "${CURFOLDER}/retrieved_data.tar.gz" retrieve
-
-   tmplog=/tmp/loadretrieved-$$-${RANDOM}
-   echo "" | docker compose run --rm -T -v ${PWD}/retrieve:/retrieve backend &> ${tmplog}-retrieve.log
-
-   if [ $? -gt 0 ] ; then
-      echo -e "\n\nErro ao carregar dados de retrieved_data.tar.gz.\n\nLog de erros pode ser encontrado em ${tmplog}-retrieve.log\n\n"
-      exit 1
-   fi
-
-   if [ -f "${CURFOLDER}/public_data.tar.gz" ]; then
-      echo "Encontrado arquivo com dados para a pasta public, iniciando processo de restauração..."
-
-      docker volume create --name rc-chat_backend_public &> ${tmplog}-createpublic.log
-
-      if [ $? -gt 0 ]; then
-         echo -e "\n\nErro ao criar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-createpublic.log\n\n"
-         exit 1
-      fi
-
-      cat "${CURFOLDER}/public_data.tar.gz" | docker run -i --rm -v rc-chat_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
-
-      if [ $? -gt 0 ]; then
-         echo -e "\n\nErro ao restaurar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-restorepublic.log\n\n"
-         exit 1
-      fi
-
-   fi
-
-   DIDRESTORE=1
-fi
-
-if ! [ "${DIDRESTORE}" ]; then
-    latest_backup_file=$(ls -t "${CURFOLDER}"/rc-chat-backup-*.tar.gz 2>/dev/null | head -n 1)
-fi
-
-if [ -n "${latest_backup_file}" ] && ! [ -d "backups" ]; then
-    echo "Backup encontrado. Preparando para restauração..."
-
-    mkdir backups
-    ln "${latest_backup_file}" backups/
-
-    echo "" | docker compose run --rm -T sidekick restore
-
-    if [ $? -gt 0 ] ; then
-      echo "Falha ao restaurar backup"
-      exit 1
-    fi
-
-    DIDRESTORE=1
-fi
-
-echo "Continuando a instalação..."
-
-# Passo 6: Sobe os containers
-if ! ( docker compose --profile acme down && docker compose --profile acme up -d ); then
-    echo "Falha ao reiniciar containers"
-    echo -e "\n\nAlterações precisam ser verificadas manualmente, procure suporte se necessário\n\n"
-    exit 1
-fi
+echo "Parando containers atuais (se existirem)..."
+docker compose --profile acme down
+echo "Iniciando containers..."
+docker compose --profile acme up -d
 
 cat << EOF
 A geração dos certificados e a inicialização do serviço pode levar
 alguns minutos.
 
-Após isso você pode acessar o RC-CHAT pela URL
-
-        https://${frontend_host}
+Após isso você pode acessar o RC-CHAT pela URL: https://${frontend_host}
 
 EOF
 
-[ "${DIDRESTORE}" ] || cat << EOF
-
-O login é ${email} e a senha é 123456
-
-EOF
-
-[ "${DIDRESTORE}" ] && cat << EOF
-
-Dados foram restaurados, logins e senhas são as mesmas do sistema de origem.
+if [ "$IS_UPDATE" = "false" ]; then
+cat << EOF
+O login é ${email} e a senha padrão é 123456
+Lembre-se de alterar a senha no primeiro acesso.
 
 EOF
+    echo "Nova instalação concluída com sucesso!"
+else
+    echo "Sistema atualizado com sucesso!"
+fi
 
-echo "Removendo imagens anteriores..."
+echo "Os arquivos de configuração estão em: $INSTALL_DIR"
+echo "Para futuras atualizações, navegue para $INSTALL_DIR e execute 'sudo ./setup.sh'"
+echo "Removendo imagens Docker antigas..."
 docker system prune -af &> /dev/null
