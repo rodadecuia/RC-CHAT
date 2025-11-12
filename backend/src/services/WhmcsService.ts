@@ -1,6 +1,7 @@
 import axios from "axios";
 import { logger } from "../utils/logger";
 import Plan from "../models/Plan";
+import { Op } from "sequelize";
 
 // Função auxiliar para encapsular as chamadas à API do WHMCS
 async function callWhmcsApi(action: string, params: any): Promise<any> {
