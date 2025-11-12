@@ -177,11 +177,17 @@ if [ $? -ne 0 ]; then echored "Falha ao obter arquivos de configuração."; exit
 if [ "$IS_UPDATE" = "false" ]; then cp rc-chat-temp/.env.example ./.env; fi
 cp rc-chat-temp/docker-compose.yml ./docker-compose.yml
 cp rc-chat-temp/install/setup.sh ./setup.sh
-cp -r rc-chat-temp/confs/ ./confs  # <-- CORREÇÃO ADICIONADA AQUI
+rm -rf ./confs && cp -r rc-chat-temp/confs ./
 chmod +x ./setup.sh
 
-# Limpa a pasta temporária
 rm -rf rc-chat-temp
+
+# Garante que a variável COMPOSE_PROJECT_PATH esteja no .env
+if ! grep -q "COMPOSE_PROJECT_PATH=" ./.env; then
+    echo "COMPOSE_PROJECT_PATH=$INSTALL_DIR" >> ./.env
+else
+    sed -i "s|^COMPOSE_PROJECT_PATH=.*|COMPOSE_PROJECT_PATH=$INSTALL_DIR|" ./.env
+fi
 
 # Atualiza o .env com os valores corretos, preservando o resto
 sed -i "s|^FRONTEND_HOST=.*|FRONTEND_HOST=$frontend_host|" ./.env

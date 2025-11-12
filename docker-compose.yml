@@ -7,7 +7,6 @@ volumes:
   redis_data:
   backend_public:
   backend_private:
-  ngx_conf:
   ngx_vhost:
   ngx_html:
   ngx_dhparam:
@@ -59,7 +58,7 @@ services:
     ports:
       - "8081:80"
     volumes:
-      - ./confs/pgadmin4-servers.json:/pgadmin4/servers.json
+      - ${COMPOSE_PROJECT_PATH:-.}/confs/pgadmin4-servers.json:/pgadmin4/servers.json
 
   #-- Ambiente de Produção (ACME) --#
   nginx-proxy:
@@ -71,12 +70,11 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ngx_conf:/etc/nginx/conf.d
+      - ${COMPOSE_PROJECT_PATH:-.}/confs:/etc/nginx/conf.d
       - ngx_vhost:/etc/nginx/vhost.d
       - ngx_html:/usr/share/nginx/html
       - ngx_dhparam:/etc/nginx/dhparam
       - ngx_certs:/etc/nginx/certs:ro
-      - ./confs/nginx-rc-chat.conf:/etc/nginx/conf.d/rc-chat.conf
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - nginx-proxy
@@ -152,8 +150,8 @@ services:
     volumes:
       - backend_public:/backend-public
       - backend_private:/backend-private
-      - ./backups:/backups
-      - ./retrieve:/retrieve
+      - ${COMPOSE_PROJECT_PATH:-.}/backups:/backups
+      - ${COMPOSE_PROJECT_PATH:-.}/retrieve:/retrieve
     depends_on:
       - postgres
     networks:
