@@ -3,32 +3,19 @@
 # Função para mostrar a mensagem de uso
 show_usage() {
     echo -e "Uso: \n"
-<<<<<<< Updated upstream
-    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s [opções] <frontend_host> <email>\n"
-=======
-    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s [opções] <frontend_host> <email>"
-    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s [opções] <backend_host> <frontend_host> <email>\n"
->>>>>>> Stashed changes
+    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- [opções] <frontend_host> <email>"
+    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- [opções] <backend_host> <frontend_host> <email>\n"
     echo -e "Opções:"
     echo -e "  --beta                  Instala a versão experimental (tag 'beta')."
     echo -e "  --dockerhub             Usa as imagens do Docker Hub em vez do GitHub (ghcr.io)."
     echo -e "  --branch <branchname>   Faz checkout de uma branch específica do repositório git.\n"
     echo -e "Exemplos: \n"
-<<<<<<< Updated upstream
-    echo -e "  Instalação Padrão (Produção do GHCR):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s rc-chat.exemplo.com.br email@exemplo.com.br\n"
-    echo -e "  Instalação da Versão Beta (do GHCR):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
-    echo -e "  Instalação Padrão (do Docker Hub):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s --dockerhub rc-chat.exemplo.com.br email@exemplo.com.br\n"
-=======
     echo -e "  Instalação Padrão (Domínio Único):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- rc-chat.exemplo.com.br email@exemplo.com.br\n"
     echo -e "  Instalação Padrão (Domínios Separados):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s api.exemplo.com.br rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- api.exemplo.com.br rc-chat.exemplo.com.br email@exemplo.com.br\n"
     echo -e "  Instalação da Versão Beta:"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
->>>>>>> Stashed changes
+    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
 }
 
 # Função para mensagem em vermelho
@@ -85,8 +72,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# *** INÍCIO DA CORREÇÃO DE LÓGICA ***
-
 # Define backend_host e backend_path com base no número de argumentos
 if [ -n "$3" ] ; then
     # Modo de 3 argumentos: backend_host, frontend_host, email
@@ -114,8 +99,6 @@ if ! [[ $email =~ $emailregex ]] ; then
     show_usage
     exit 1
 fi
-
-# *** FIM DA CORREÇÃO DE LÓGICA ***
 
 echo ""
 echoblue "                                               "
