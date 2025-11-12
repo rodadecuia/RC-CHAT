@@ -72,7 +72,7 @@ export const logger = pino({
       socketSendLog(level, inputArgs).catch(() => {
         // Ignore errors when sending logs over socket
       });
-      addSubsystem(inputArgs, "ticketz");
+      addSubsystem(inputArgs, "rc-chat");
       method.apply(this, inputArgs);
     }
   }
