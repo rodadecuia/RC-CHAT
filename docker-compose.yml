@@ -37,6 +37,10 @@ services:
     image: ${IMAGE_PREFIX:-ghcr.io/rodadecuia}/rc-chat-frontend:${IMAGE_TAG:-latest}
     env_file:
       - .env
+    environment:
+      - VIRTUAL_HOST=${FRONTEND_HOST}
+      - LETSENCRYPT_HOST=${FRONTEND_HOST}
+      - LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}
     volumes:
       - backend_public:/var/www/backend-public
     restart: always
