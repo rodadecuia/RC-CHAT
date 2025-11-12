@@ -24,6 +24,9 @@ COPY --from=build --parents \
   /usr/src/app/./scripts \
   .
 
+# Add execution permission to the script
+RUN chmod +x ./scripts/load-retrieved.sh
+
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV TICKETZ_REGISTRY_URL=${TICKETZ_REGISTRY_URL}
