@@ -23,6 +23,9 @@ services:
       - backend_private:/usr/src/app/private
     env_file:
       - .env
+    # Impede que o nginx-proxy detecte este container
+    environment:
+      - VIRTUAL_HOST=
     restart: always
     depends_on:
       - postgres
@@ -50,6 +53,7 @@ services:
       - "${FRONTEND_PORT:-3000}:80"
     networks:
       - rc-chat
+      - nginx-proxy
 
   #-- Ambiente de Desenvolvimento --#
   pgadmin4:
