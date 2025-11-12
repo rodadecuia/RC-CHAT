@@ -173,13 +173,17 @@ rm -rf rc-chat-temp
 git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat-temp
 if [ $? -ne 0 ]; then echored "Falha ao obter arquivos de configuração."; exit 1; fi
 
+# Copia os arquivos essenciais do repositório temporário
 if [ "$IS_UPDATE" = "false" ]; then cp rc-chat-temp/.env.example ./.env; fi
 cp rc-chat-temp/docker-compose.yml ./docker-compose.yml
 cp rc-chat-temp/install/setup.sh ./setup.sh
+cp -r rc-chat-temp/confs/ ./confs  # <-- CORREÇÃO ADICIONADA AQUI
 chmod +x ./setup.sh
 
+# Limpa a pasta temporária
 rm -rf rc-chat-temp
 
+# Atualiza o .env com os valores corretos, preservando o resto
 sed -i "s|^FRONTEND_HOST=.*|FRONTEND_HOST=$frontend_host|" ./.env
 sed -i "s|^BACKEND_URL=.*|BACKEND_URL=https:\/\/$backend_host$backend_path|" ./.env
 sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https:\/\/$frontend_host|" ./.env
