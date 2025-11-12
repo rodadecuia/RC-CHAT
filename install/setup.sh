@@ -3,19 +3,19 @@
 # Função para mostrar a mensagem de uso
 show_usage() {
     echo -e "Uso: \n"
-    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- [opções] <frontend_host> <email>"
-    echo -e "  curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- [opções] <backend_host> <frontend_host> <email>\n"
+    echo -e "  ./setup.sh [opções] <frontend_host> <email>"
+    echo -e "  ./setup.sh [opções] <backend_host> <frontend_host> <email>\n"
     echo -e "Opções:"
     echo -e "  --beta                  Instala a versão experimental (tag 'beta')."
     echo -e "  --dockerhub             Usa as imagens do Docker Hub em vez do GitHub (ghcr.io)."
     echo -e "  --branch <branchname>   Faz checkout de uma branch específica do repositório git.\n"
     echo -e "Exemplos: \n"
     echo -e "  Instalação Padrão (Domínio Único):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "    sudo ./setup.sh rc-chat.exemplo.com.br email@exemplo.com.br\n"
     echo -e "  Instalação Padrão (Domínios Separados):"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- api.exemplo.com.br rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "    sudo ./setup.sh api.exemplo.com.br rc-chat.exemplo.com.br email@exemplo.com.br\n"
     echo -e "  Instalação da Versão Beta:"
-    echo -e "    curl -sSL <URL_DO_SCRIPT> | sudo bash -s -- --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
+    echo -e "    sudo ./setup.sh --beta rc-chat.exemplo.com.br email@exemplo.com.br\n"
 }
 
 # Função para mensagem em vermelho
@@ -68,7 +68,7 @@ done
 
 # Verifica se está rodando como root
 if [[ $EUID -ne 0 ]]; then
-   echo "Este script deve ser executado como root"
+   echo "Este script deve ser executado como root (use sudo ./setup.sh)"
    exit 1
 fi
 
@@ -104,8 +104,8 @@ echo ""
 echoblue "                                               "
 echoblue "  RC-CHAT - Site oficial https://rc-chat.com   "
 echoblue "                                               "
-echoblue "  Contato Whatsapp: +55 49 99981 2291          "
-echoblue "                    https://wa.me/554999812291 "
+echoblue "  Contato Whatsapp: +55 54 36421111            "
+echoblue "                    https://wa.me/555436421111 "
 echoblue "                                               "
 
 # Mensagem sobre o registro e a versão
@@ -134,13 +134,32 @@ fi
 # salva pasta atual
 CURFOLDER=${PWD}
 
-# Passo 1: Providencia uma VPS zerada e aponta os hostnames do teu DNS para ela
-# Passo 2: Instala o docker / apenas se já não tiver instalado
+# Passo 2: Instala dependências (Docker e Git)
 which docker > /dev/null || curl -sSL https://get.docker.com | sh
 
-# Passo 3: Baixa o projeto e entra na pasta
-[ -d rc-chat ] || git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat
+if ! command -v git &> /dev/null; then
+    echo "Git não encontrado. Instalando git..."
+    apt-get update
+    apt-get install -y git
+fi
+
+# Passo 3: Baixa ou atualiza o projeto
+if [ ! -d "rc-chat/.git" ]; then
+    echo "Clonando o repositório RC-CHAT..."
+    rm -rf rc-chat
+    git clone https://github.com/rodadecuia/RC-CHAT.git rc-chat
+    if [ $? -ne 0 ]; then
+        echored "Falha ao clonar o repositório. Verifique sua conexão e permissões."
+        exit 1
+    fi
+fi
+
 cd rc-chat
+if [ $? -ne 0 ]; then
+    echored "Não foi possível entrar no diretório 'rc-chat'."
+    exit 1
+fi
+
 if ! git diff-index --quiet HEAD -- ; then
   echo "Salvando alterações locais com git stash push"
   git stash push &> /dev/null
@@ -169,7 +188,6 @@ if ! git pull &> pull.log; then
 fi
 
 # Passo 4: Configura os hostnames
-# Copia o .env.example e faz as substituições
 cp .env.example .env
 
 cat .env \
@@ -197,11 +215,11 @@ DIDRESTORE=""
 echo "Baixando imagens de $IMAGE_PREFIX (versão: $IMAGE_TAG)..."
 docker compose --profile acme pull
 
-if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
+if [ -f "${CURFOLDER}/retrieved_data.tar.gz" ]; then
    echo "Dados de importação encotrados, iniciando o processo de carga..."
 
    [ -d retrieve ] || mkdir retrieve
-   cp ${CURFOLDER}/retrieved_data.tar.gz retrieve
+   cp "${CURFOLDER}/retrieved_data.tar.gz" retrieve
 
    tmplog=/tmp/loadretrieved-$$-${RANDOM}
    echo "" | docker compose run --rm -T -v ${PWD}/retrieve:/retrieve backend &> ${tmplog}-retrieve.log
@@ -211,7 +229,7 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
       exit 1
    fi
 
-   if [ -f ${CURFOLDER}/public_data.tar.gz ]; then
+   if [ -f "${CURFOLDER}/public_data.tar.gz" ]; then
       echo "Encontrado arquivo com dados para a pasta public, iniciando processo de restauração..."
 
       docker volume create --name rc-chat_backend_public &> ${tmplog}-createpublic.log
@@ -221,7 +239,7 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
          exit 1
       fi
 
-      cat ${CURFOLDER}/public_data.tar.gz | docker run -i --rm -v rc-chat_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
+      cat "${CURFOLDER}/public_data.tar.gz" | docker run -i --rm -v rc-chat_backend_public:/public alpine ash -c "tar -xzf - -C /public" &> ${tmplog}-restorepublic.log
 
       if [ $? -gt 0 ]; then
          echo -e "\n\nErro ao restaurar volume public\n\nLog de erros pode ser encontrado em ${tmplog}-restorepublic.log\n\n"
@@ -234,7 +252,7 @@ if [ -f ${CURFOLDER}/retrieved_data.tar.gz ]; then
 fi
 
 if ! [ "${DIDRESTORE}" ]; then
-    latest_backup_file=$(ls -t ${CURFOLDER}/rc-chat-backup-*.tar.gz 2>/dev/null | head -n 1)
+    latest_backup_file=$(ls -t "${CURFOLDER}"/rc-chat-backup-*.tar.gz 2>/dev/null | head -n 1)
 fi
 
 if [ -n "${latest_backup_file}" ] && ! [ -d "backups" ]; then
