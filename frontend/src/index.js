@@ -23,20 +23,34 @@ if (!config) {
 
   const backendUrl = `${protocol}://${hostname}${port}${path}/?cb=${Date.now()}`;
 
-  axios.get(backendUrl)
+  // Tolerate 3xx/4xx (e.g., 301 redirect, 401 unauthorized) so the app can load
+  // and handle authentication flows. Only treat 5xx as unavailable.
+  axios
+    .get(backendUrl, { validateStatus: () => true })
     .then((response) => {
-      console.log(response);
-      const serverDate = new Date(response.headers["date"]);
-      const clientDate = new Date();
-      const diff = Math.abs(serverDate - clientDate);
-      const diffMinutes = Math.floor((diff / 1000) / 60);
-      if (diffMinutes > 5) {
-        let message = i18n.t("frontendErrors.ERR_CLOCK_OUT_OF_SYNC");
-        message += `<br><br>Server time: ${serverDate.toLocaleString()}`;
-        message += `<br>Client time: ${clientDate.toLocaleString()}`;
-        message += `<br>difference: ${diffMinutes} minute(s)`;
-        window.renderError(message);
+      // If the backend responds with a server error, surface the error screen.
+      if (response.status >= 500) {
+        window.renderError(i18n.t("frontendErrors.ERR_BACKEND_UNREACHABLE"));
         return;
+      }
+
+      // Defensive Date header parsing: skip clock drift check when missing/invalid.
+      const serverDateHeader = response.headers && response.headers["date"];
+      if (serverDateHeader) {
+        const serverDate = new Date(serverDateHeader);
+        if (!isNaN(serverDate.getTime())) {
+          const clientDate = new Date();
+          const diff = Math.abs(serverDate.getTime() - clientDate.getTime());
+          const diffMinutes = Math.floor(diff / 1000 / 60);
+          if (diffMinutes > 5) {
+            let message = i18n.t("frontendErrors.ERR_CLOCK_OUT_OF_SYNC");
+            message += `<br><br>Server time: ${serverDate.toLocaleString()}`;
+            message += `<br>Client time: ${clientDate.toLocaleString()}`;
+            message += `<br>difference: ${diffMinutes} minute(s)`;
+            window.renderError(message);
+            return;
+          }
+        }
       }
 
       ReactDOM.render(
