@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 
 import { makeStyles, createTheme, ThemeProvider } from "@material-ui/core/styles";
 import { IconButton } from "@material-ui/core";
-import { MoreVert, Replay } from "@material-ui/icons";
+import { MoreVert, Replay, History } from "@material-ui/icons";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -19,6 +19,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import { green } from '@material-ui/core/colors';
 import { PhoneCallContext } from "../../context/PhoneCall/PhoneCallContext";
 import { wavoipAvailable, wavoipCall } from "../../helpers/wavoipCallManager";
+import TicketLog from "../TicketLog";
 
 const useStyles = makeStyles(theme => ({
 	actionButtons: {
@@ -37,6 +38,7 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [logModalOpen, setLogModalOpen] = useState(false);
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 	const { setCurrentTicket } = useContext(TicketsContext);
@@ -157,6 +159,14 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
             </>
           }
 
+          {user.profile === "admin" && (
+            <Tooltip title="Histórico">
+              <IconButton onClick={() => setLogModalOpen(true)}>
+                <History />
+              </IconButton>
+            </Tooltip>
+          )}
+
           <IconButton onClick={handleOpenTicketOptionsMenu}>
 						<MoreVert />
 					</IconButton>
@@ -180,6 +190,11 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 					{i18n.t("messagesList.header.buttons.accept")}
 				</ButtonWithSpinner>
 			)}
+      <TicketLog
+        open={logModalOpen}
+        onClose={() => setLogModalOpen(false)}
+        log={ticket.log || []}
+      />
 		</div>
 	);
 };

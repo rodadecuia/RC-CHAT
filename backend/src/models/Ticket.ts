@@ -12,7 +12,8 @@ import {
   Default,
   BeforeCreate,
   BelongsToMany,
-  HasOne
+  HasOne,
+  DataType
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
 
@@ -117,6 +118,17 @@ class Ticket extends Model<Ticket> {
   @Default(uuidv4())
   @Column
   uuid: string;
+
+  @Column({
+    type: DataType.JSONB,
+    defaultValue: [],
+  })
+  log: {
+    userId: number;
+    username: string;
+    action: string;
+    timestamp: Date;
+  }[];
 
   @BeforeCreate
   static setUUID(ticket: Ticket) {

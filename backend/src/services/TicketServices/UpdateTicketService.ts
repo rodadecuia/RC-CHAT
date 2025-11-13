@@ -309,13 +309,37 @@ const UpdateTicketService = async ({
       ticketTraking.chatbotendAt = moment().toDate();
     }
 
+    const newLog = [];
+
+    if (userId && userId !== oldUserId) {
+      const action = oldUserId ? "transfer" : "attended";
+      const user = await User.findByPk(userId);
+      newLog.push({
+        userId: user.id,
+        username: user.name,
+        action,
+        timestamp: new Date(),
+      });
+    }
+
+    if (queueId && queueId !== oldQueueId) {
+      const user = await User.findByPk(reqUserId);
+      newLog.push({
+        userId: user.id,
+        username: user.name,
+        action: "queue_transfer",
+        timestamp: new Date(),
+      });
+    }
+
     await ticket.update({
       status,
       queueId,
       userId,
       whatsappId: ticket.whatsappId,
       chatbot,
-      queueOptionId
+      queueOptionId,
+      log: ticket.log ? [...ticket.log, ...newLog] : newLog,
     });
 
     if (oldStatus !== status) {
