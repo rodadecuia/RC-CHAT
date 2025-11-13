@@ -340,24 +340,12 @@ export default function PlansManager() {
     }
 
     const handleSubmit = async (data) => {
-        const datanew = {
-            id: data.id,
-            connections: data.connections,
-            name: data.name,
-            queues: data.queues,
-            users: data.users,
-            value: data.value.replace(",", "."),
-            currency: data.currency,
-            isPublic: data.isPublic,
-            whmcsProductId: data.whmcsProductId, // Inclui whmcsProductId
-        }
-        console.log(datanew)
         setLoading(true)
         try {
             if (data.id !== undefined) {
-                await update(datanew)
+                await update(data)
             } else {
-                await save(datanew)
+                await save(data)
             }
             await loadPlans()
             handleCancel()
