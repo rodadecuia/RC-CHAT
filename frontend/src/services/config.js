@@ -20,20 +20,34 @@ if (!config) {
 }
 
 export function getBackendURL() {
-  return (
-    config.REACT_APP_BACKEND_URL ||
-    (config.BACKEND_PROTOCOL ?? "https") + "://" +
-    (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? 443) +
-    (config.BACKEND_PATH ?? "")
-  );
+  // Prioriza URL absoluta se fornecida
+  if (config.REACT_APP_BACKEND_URL) return config.REACT_APP_BACKEND_URL;
+
+  const protocol = config.BACKEND_PROTOCOL ?? "https";
+  // Evita usar hosts internos como "backend" / "localhost" no browser público
+  const configuredHost = config.BACKEND_HOST;
+  const host = (!configuredHost || ["backend", "localhost", "127.0.0.1"].includes(configuredHost))
+    ? window.location.hostname
+    : configuredHost;
+
+  const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
+  // Quando o host for o mesmo do site, por padrão usamos o path "/backend"
+  const path = config.BACKEND_PATH ?? (host === window.location.hostname ? "/backend" : "");
+
+  return `${protocol}://${host}${port}${path}`;
 }
 
 export function getBackendSocketURL() {
-  return (
-    config.REACT_APP_BACKEND_URL ||
-    (config.BACKEND_PROTOCOL ?? "https") + "://" +
-    (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? 443)
-  );
+  if (config.REACT_APP_BACKEND_URL) return config.REACT_APP_BACKEND_URL;
+
+  const protocol = config.BACKEND_PROTOCOL ?? "https";
+  const configuredHost = config.BACKEND_HOST;
+  const host = (!configuredHost || ["backend", "localhost", "127.0.0.1"].includes(configuredHost))
+    ? window.location.hostname
+    : configuredHost;
+
+  const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
+  return `${protocol}://${host}${port}`;
 }
 
 export default config;

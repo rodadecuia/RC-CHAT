@@ -12,9 +12,12 @@ if (!config) {
   window.renderError(i18n.t("frontendErrors.ERR_CONFIG_ERROR"));
 } else {
   const protocol = config.BACKEND_PROTOCOL || "https";
-  const hostname = config.BACKEND_HOST || window.location.hostname;
+  const configuredHost = config.BACKEND_HOST;
+  const hostname = (!configuredHost || ["backend", "localhost", "127.0.0.1"].includes(configuredHost))
+    ? window.location.hostname
+    : configuredHost;
   const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
-  const path = config.BACKEND_PATH || ((hostname === "localhost" || hostname !== window.location.hostname) ? "" : "/backend");
+  const path = config.BACKEND_PATH || (hostname === window.location.hostname ? "/backend" : "");
 
   const backendUrl = `${protocol}://${hostname}${port}${path}/?cb=${Date.now()}`;
 
