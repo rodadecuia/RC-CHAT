@@ -31,4 +31,20 @@ routes.get(
   DashboardController.usersReport
 );
 
+routes.get(
+  "/dashboard/ratings",
+  isAuth,
+  isAdmin,
+  isCompliant,
+  DashboardController.ratingsReport
+);
+
+routes.get(
+  "/dashboard/contacts",
+  isAuth,
+  isAdmin,
+  isCompliant,
+  DashboardController.contactsReport
+);
+
 export default routes;

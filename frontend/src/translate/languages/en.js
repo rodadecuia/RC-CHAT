@@ -93,8 +93,20 @@ const messages = {
         newContacts: "New contacts",
         avgServiceTime: "Average service time",
         avgWaitTime: "Average wait time",
+        avgRating: "Average rating",
         ticketsOnPeriod: "Tickets in the period",
         userCurrentStatus: "Current status",
+        csat: {
+          avgRate: "Average rate",
+          ratingsByStars: "Ratings by stars",
+          avgRatingsByUser: "Average ratings by user",
+          stars: "stars",
+          user: "User",
+        },
+        contacts: {
+          contact: "Contact",
+          tickets: "Tickets",
+        },
         filter: {
           period: "Period",
           custom: "Custom",

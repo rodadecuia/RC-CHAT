@@ -93,8 +93,20 @@ const messages = {
         newContacts: "Novos contatos",
         avgServiceTime: "Tempo médio de atendimento",
         avgWaitTime: "Tempo médio de espera",
+        avgRating: "Nota média de satisfação",
         ticketsOnPeriod: "Atendimentos no período",
         userCurrentStatus: "Status (Atual)",
+        csat: {
+          avgRate: "Nota média",
+          ratingsByStars: "Avaliações por estrela",
+          avgRatingsByUser: "Nota média por atendente",
+          stars: "estrelas",
+          user: "Atendente",
+        },
+        contacts: {
+          contact: "Contato",
+          tickets: "Tickets",
+        },
         filter: {
           period: "Período",
           custom: "Personalizado",

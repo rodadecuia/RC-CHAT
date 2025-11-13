@@ -92,8 +92,20 @@ const messages = {
         newContacts: "Nuevos contactos",
         avgServiceTime: "Tiempo promedio de atención",
         avgWaitTime: "Tiempo promedio de espera",
+        avgRating: "Calificación promedio",
         ticketsOnPeriod: "Atenciones en el período",
         userCurrentStatus: "Estado (Actual)",
+        csat: {
+          avgRate: "Calificación promedio",
+          ratingsByStars: "Calificaciones por estrellas",
+          avgRatingsByUser: "Calificación promedio por usuario",
+          stars: "estrellas",
+          user: "Usuario",
+        },
+        contacts: {
+          contact: "Contacto",
+          tickets: "Tickets",
+        },
         filter: {
           period: "Período",
           custom: "Personalizado",
@@ -967,7 +979,7 @@ const messages = {
           title: "Whitelabel",
         },
         PaymentGateways: {
-          title: "Payment gateways",
+          title: "Pasarelas de pago",
         },
         i18nSettings: {
           title: "Traducciones",

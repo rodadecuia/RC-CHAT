@@ -43,6 +43,20 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
 
 ### 🚀 Novas Funcionalidades
 
+#### Log de Auditoria de Tickets
+- **Histórico Detalhado por Ticket:** Implementado um sistema de log que registra todas as ações importantes em um ticket, incluindo:
+    - Atendimento inicial pelo operador.
+    - Todas as transferências entre operadores e filas.
+    - Envio de mensagens pelo atendente.
+- **Acesso Restrito:** O histórico do ticket é visível apenas para administradores, garantindo a confidencialidade das informações.
+
+#### Melhorias na Dashboard
+- **Relatório de Satisfação do Cliente (CSAT):** Adicionado um novo conjunto de relatórios para analisar a satisfação do cliente:
+    - **Nota Média Geral:** Um card com a nota média de todas as avaliações.
+    - **Distribuição de Notas:** Um gráfico de pizza que mostra a porcentagem de cada nota (de 1 a 5 estrelas).
+    - **Performance por Atendente:** Uma tabela que exibe a nota média de cada atendente.
+- **Ranking de Contatos:** Adicionado um novo relatório que exibe um ranking dos contatos com mais tickets, ajudando a identificar os clientes mais ativos.
+
 #### Integração Avançada com WHMCS
 
 -   **Login Unificado (SSO) para Clientes Finais:** Implementado um sistema de autenticação inteligente. Agora, a tela de login principal do RC-CHAT permite a autenticação de duas formas:
@@ -72,6 +86,9 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
 
 ### 🐞 Correções de Erros (Bug Fixes)
 
+- **Autenticação via Token:** Corrigido o middleware de autenticação de token para garantir que o envio de mensagens via API funcione corretamente.
+- **Importação de Contatos:** Desativada a importação automática de contatos ao conectar uma nova conta do WhatsApp, mantendo apenas a importação manual.
+- **Exibição do Ícone Wavoip:** Ajustada a lógica de verificação para garantir que o ícone de chamada de voz (`wavoip`) seja exibido corretamente, mesmo em ambientes de desenvolvimento sem `https`.
 -   **Erro 502 Bad Gateway (Múltiplas Causas):**
     -   **Conflito de Rede:** Corrigido o `docker-compose.yml` para garantir que o `nginx-proxy` e o `frontend` estejam na mesma rede Docker, permitindo a comunicação.
     -   **Conflito de Configuração:** Resolvido um problema onde o `nginx-proxy` detectava incorretamente o container do `backend` como um host virtual, causando um balanceamento de carga incorreto.

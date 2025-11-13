@@ -6,6 +6,8 @@ import User from "../../models/User";
 import TicketTraking from "../../models/TicketTraking";
 import sequelize from "../../database";
 import { listCounterSerie } from "../CounterServices/ListCounterSerie";
+import UserRating from "../../models/UserRating";
+import Contact from "../../models/Contact";
 
 type TicketTrackingStatistics = {
   avgWaitTime: number;
@@ -89,17 +91,17 @@ export async function calculateTicketStatistics(
 
   const countContactsQuery = `
   SELECT COUNT(*) AS count FROM (SELECT FROM (
-    SELECT 
+    SELECT
         t.id AS "ticketId",
         t."contactId",
         c."createdAt"
-    FROM 
+    FROM
         "TicketTraking" tt
-    JOIN 
+    JOIN
         "Tickets" t ON tt."ticketId" = t.id
-    JOIN 
+    JOIN
         "Contacts" c ON t."contactId" = c.id
-    WHERE 
+    WHERE
         (tt."createdAt" BETWEEN :startDate AND :endDate)
         AND (tt."companyId" = :companyId)
         AND (tt."finishedAt" BETWEEN :startDate AND :endDate)
@@ -346,4 +348,131 @@ export async function usersReportService(
     end: params.date_to,
     userReport: await userReport(companyId, start, end)
   };
+}
+
+export async function ratingsReportService(
+  companyId: number,
+  params: DashboardDateRange
+) {
+  let start: Date;
+  let end = new Date();
+  const tz = params.tz || "Z";
+
+  if (params.date_from && params.date_to) {
+    start = new Date(
+      `${params.date_from}T${params?.hour_from || "00:00:00"}${tz}`
+    );
+    end = new Date(`${params.date_to}T${params?.hour_to || "23:59:59"}${tz}`);
+  } else {
+    throw new Error("Invalid date range");
+  }
+
+  const ratings = await UserRating.findAll({
+    where: {
+      companyId,
+      createdAt: {
+        [Op.between]: [start, end]
+      }
+    },
+    include: [
+      {
+        model: User,
+        attributes: ["id", "name"]
+      }
+    ]
+  });
+
+  const ratingsByDay = await UserRating.findAll({
+    attributes: [
+      [fn("date_trunc", "day", col("createdAt")), "day"],
+      [fn("AVG", col("rate")), "avgRate"]
+    ],
+    where: {
+      companyId,
+      createdAt: {
+        [Op.between]: [start, end]
+      }
+    },
+    group: ["day"],
+    order: [["day", "ASC"]]
+  });
+
+  const avgRate =
+    ratings.reduce((acc, rating) => acc + rating.rate, 0) / ratings.length;
+
+  const ratingsByStars = ratings.reduce((acc, rating) => {
+    acc[rating.rate] = acc[rating.rate] ? acc[rating.rate] + 1 : 1;
+    return acc;
+  }, {});
+
+  const ratingsByUser = ratings.reduce((acc, rating) => {
+    if (!acc[rating.userId]) {
+      acc[rating.userId] = {
+        name: rating.user.name,
+        ratings: []
+      };
+    }
+    acc[rating.userId].ratings.push(rating.rate);
+    return acc;
+  }, {});
+
+  const avgRatingsByUser = Object.keys(ratingsByUser).map(userId => {
+    const userRatings = ratingsByUser[userId].ratings;
+    const avg =
+      userRatings.reduce((acc, rate) => acc + rate, 0) / userRatings.length;
+    return {
+      userId,
+      name: ratingsByUser[userId].name,
+      avgRate: avg
+    };
+  });
+
+  return {
+    avgRate: avgRate || 0,
+    ratingsByStars,
+    avgRatingsByUser,
+    ratingsByDay
+  };
+}
+
+export async function contactsReportService(
+  companyId: number,
+  params: DashboardDateRange
+) {
+  let start: Date;
+  let end = new Date();
+  const tz = params.tz || "Z";
+
+  if (params.date_from && params.date_to) {
+    start = new Date(
+      `${params.date_from}T${params?.hour_from || "00:00:00"}${tz}`
+    );
+    end = new Date(`${params.date_to}T${params?.hour_to || "23:59:59"}${tz}`);
+  } else {
+    throw new Error("Invalid date range");
+  }
+
+  const contacts = await Ticket.findAll({
+    attributes: [
+      "contactId",
+      [fn("COUNT", col("contactId")), "ticketsCount"],
+    ],
+    where: {
+      companyId,
+      createdAt: {
+        [Op.between]: [start, end],
+      },
+    },
+    include: [
+      {
+        model: Contact,
+        attributes: ["name", "number"],
+      },
+    ],
+    group: ["contactId", "contact.id"],
+    order: [[fn("COUNT", col("contactId")), "DESC"]],
+    limit: 10,
+  });
+
+  return contacts;
 }

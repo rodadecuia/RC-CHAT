@@ -15,12 +15,16 @@ import GroupAddIcon from "@material-ui/icons/GroupAdd";
 import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import TimerIcon from '@material-ui/icons/Timer';
+import StarIcon from '@material-ui/icons/Star';
 
 import { makeStyles } from "@material-ui/core/styles";
 import { grey, blue } from "@material-ui/core/colors";
 import { toast } from "react-toastify";
 
 import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsStatus";
+import RatingsChart from "../../components/Dashboard/RatingsChart";
+import RatingsByUser from "../../components/Dashboard/RatingsByUser";
+import ContactsRanking from "../../components/Dashboard/ContactsRanking";
 
 import { isEmpty } from "lodash";
 import moment from "moment";
@@ -286,6 +290,13 @@ const Dashboard = () => {
   const [openedChartData, setOpenedChartData] = useState([]);
   
   const [ticketsData, setTicketsData] = useState({});
+  const [ratingsData, setRatingsData] = useState({
+    avgRate: 0,
+    ratingsByStars: {},
+    avgRatingsByUser: [],
+    ratingsByDay: [],
+  });
+  const [contactsData, setContactsData] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
@@ -449,6 +460,20 @@ const Dashboard = () => {
       result => {
         if (result?.data) {
           setTicketsData(result.data);
+        }
+      }).catch(() => {});
+
+    api.get("/dashboard/ratings", { params }).then(
+      result => {
+        if (result?.data) {
+          setRatingsData(result.data);
+        }
+      }).catch(() => {});
+
+    api.get("/dashboard/contacts", { params }).then(
+      result => {
+        if (result?.data) {
+          setContactsData(result.data);
         }
       }).catch(() => {});
 
@@ -741,6 +766,13 @@ const Dashboard = () => {
             icon={<HourglassEmptyIcon style={{ fontSize: 100 }} />}
           />
 
+          {/* NOTA MÉDIA DE SATISFAÇÃO */}
+          <InfoCard
+            title={i18n.t("dashboard.avgRating")}
+            value={ratingsData.avgRate.toFixed(2)}
+            icon={<StarIcon style={{ fontSize: 100 }} />}
+          />
+
           {/* DASHBOARD ATENDIMENTOS NO PERÍODO */}
           <Grid item xs={12}>
             <Paper className={classes.fixedHeightPaper}>
@@ -754,6 +786,26 @@ const Dashboard = () => {
             </Paper>
           </Grid>
 
+          {/* GRÁFICO DE AVALIAÇÕES */}
+          <Grid item xs={12} md={6}>
+            <Paper className={classes.fixedHeightPaper}>
+              <RatingsChart data={ratingsData.ratingsByStars} />
+            </Paper>
+          </Grid>
+
+          {/* TABELA DE AVALIAÇÕES POR ATENDENTE */}
+          <Grid item xs={12} md={6}>
+            <Paper className={classes.fixedHeightPaper}>
+              <RatingsByUser data={ratingsData.avgRatingsByUser} />
+            </Paper>
+          </Grid>
+
+          {/* RANKING DE CONTATOS */}
+          <Grid item xs={12}>
+            <Paper className={classes.fixedHeightPaper}>
+              <ContactsRanking data={contactsData} />
+            </Paper>
+          </Grid>
 
           {/* USER REPORT */}
           <Grid item xs={12}>
