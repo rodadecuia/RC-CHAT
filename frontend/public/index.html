@@ -231,8 +231,10 @@
       const hostname = (!configuredHost || ["backend", "localhost", "127.0.0.1"].includes(configuredHost))
         ? window.location.hostname
         : configuredHost;
-      const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
-      const path = config.BACKEND_PATH || (hostname === window.location.hostname ? "/backend" : "");
+      const sameHost = hostname === window.location.hostname;
+      // Não force a porta quando o host é o mesmo do site (usa 443/80 padrão)
+      const port = (!sameHost && config.BACKEND_PORT) ? `:${config.BACKEND_PORT}` : "";
+      const path = config.BACKEND_PATH || (sameHost ? "/backend" : "");
     	
     	const backendUrl = `${protocol}://${hostname}${port}${path}`;
 	    const settingsBaseUrl = backendUrl + "/public-settings";

@@ -20,8 +20,25 @@ if (!config) {
 }
 
 export function getBackendURL() {
-  // Prioriza URL absoluta se fornecida
-  if (config.REACT_APP_BACKEND_URL) return config.REACT_APP_BACKEND_URL;
+  // Prioriza URL absoluta se fornecida, mas ignora hosts internos/privados
+  if (config.REACT_APP_BACKEND_URL) {
+    try {
+      const u = new URL(config.REACT_APP_BACKEND_URL);
+      const host = u.hostname;
+      const isLocalLabel = ["backend", "localhost", "127.0.0.1"].includes(host);
+      const isPrivateIp = (
+        /^10\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)
+      );
+      if (!isLocalLabel && !isPrivateIp) {
+        return config.REACT_APP_BACKEND_URL;
+      }
+      // caso contrário, cai no fallback abaixo
+    } catch (e) {
+      // URL inválida, usa fallback
+    }
+  }
 
   const protocol = config.BACKEND_PROTOCOL ?? "https";
   // Evita usar hosts internos como "backend" / "localhost" no browser público
@@ -30,15 +47,33 @@ export function getBackendURL() {
     ? window.location.hostname
     : configuredHost;
 
-  const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
+  const sameHost = host === window.location.hostname;
+  // Se for o mesmo host do site, não força porta do backend (usa a padrão do navegador)
+  const port = (!sameHost && config.BACKEND_PORT) ? `:${config.BACKEND_PORT}` : "";
   // Quando o host for o mesmo do site, por padrão usamos o path "/backend"
-  const path = config.BACKEND_PATH ?? (host === window.location.hostname ? "/backend" : "");
+  const path = config.BACKEND_PATH ?? (sameHost ? "/backend" : "");
 
   return `${protocol}://${host}${port}${path}`;
 }
 
 export function getBackendSocketURL() {
-  if (config.REACT_APP_BACKEND_URL) return config.REACT_APP_BACKEND_URL;
+  if (config.REACT_APP_BACKEND_URL) {
+    try {
+      const u = new URL(config.REACT_APP_BACKEND_URL);
+      const host = u.hostname;
+      const isLocalLabel = ["backend", "localhost", "127.0.0.1"].includes(host);
+      const isPrivateIp = (
+        /^10\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)
+      );
+      if (!isLocalLabel && !isPrivateIp) {
+        return config.REACT_APP_BACKEND_URL;
+      }
+    } catch (e) {
+      // ignora e usa fallback
+    }
+  }
 
   const protocol = config.BACKEND_PROTOCOL ?? "https";
   const configuredHost = config.BACKEND_HOST;
@@ -46,7 +81,8 @@ export function getBackendSocketURL() {
     ? window.location.hostname
     : configuredHost;
 
-  const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
+  const sameHost = host === window.location.hostname;
+  const port = (!sameHost && config.BACKEND_PORT) ? `:${config.BACKEND_PORT}` : "";
   return `${protocol}://${host}${port}`;
 }
 
