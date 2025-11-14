@@ -27,7 +27,11 @@ A instalação é feita em 2 passos simples:
 Conecte-se ao seu servidor via SSH e baixe o script de instalação com o seguinte comando:
 
 ```sh
+<<<<<<< Updated upstream
 curl -sSLO https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- [opções] <host_frontend> <email>
+>>>>>>> Stashed changes
 ```
 
 #### 2º Passo: Executar o Assistente de Instalação
@@ -35,8 +39,12 @@ curl -sSLO https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/set
 Dê permissão de execução ao script e rode-o com `sudo`. O script irá iniciar um assistente interativo que fará as perguntas necessárias para configurar o sistema.
 
 ```sh
+<<<<<<< Updated upstream
 chmod +x setup.sh
 sudo ./setup.sh
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 ```
 
 O assistente irá perguntar sobre:
@@ -55,7 +63,11 @@ Manter seu sistema atualizado é ainda mais fácil.
 Basta executar o mesmo comando no seu servidor (não é necessário baixar o script novamente se você já o tem):
 
 ```sh
+<<<<<<< Updated upstream
 sudo ./setup.sh
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --beta rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 ```
 
 O script irá detectar sua instalação existente, ler suas configurações atuais e baixar as últimas imagens para atualizar o sistema, preservando todos os seus dados.
@@ -66,12 +78,20 @@ Você pode usar flags para mudar a versão ou a origem das imagens durante uma a
 
 **Exemplo 1: Mudar para a versão Beta**
 ```sh
+<<<<<<< Updated upstream
 sudo ./setup.sh --beta
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --dockerhub rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 ```
 
 **Exemplo 2: Mudar para usar imagens do Docker Hub**
 ```sh
+<<<<<<< Updated upstream
 sudo ./setup.sh --dockerhub
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 ```
 
 ### O que o Script Faz?

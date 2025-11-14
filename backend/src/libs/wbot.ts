@@ -102,43 +102,7 @@ export const removeWbot = async (
   }
 };
 
-function getGreaterVersion(a, b) {
-  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
-    const numA = a[i] || 0;
-    const numB = b[i] || 0;
-
-    if (numA > numB) {
-      return a;
-    }
-    if (numA < numB) {
-      return b;
-    }
-  }
-
-  return a;
-}
-
-const waVersionCache = new NodeCache({
-  stdTTL: 60 * 60 * 24, // 24 hours
-  checkperiod: 60 * 30, // 30 minutes
-  useClones: false
-});
-
-const waVersionMutex = new Mutex();
 const checkWbotDuplicity = new Mutex();
-
-const getProjectWAVersion = async () => {
-  try {
-    const res = await fetch(
-      "https://raw.githubusercontent.com/ticketz-oss/ticketz/refs/heads/main/backend/src/waversion.json"
-    );
-    const version = await res.json();
-    return version;
-  } catch (error) {
-    logger.warn("Failed to get current WA Version from project repository");
-  }
-  return waVersion;
-};
 
 export const initWASocket = async (
   whatsapp: Whatsapp,
@@ -158,26 +122,9 @@ export const initWASocket = async (
 
         const { id, name, provider } = whatsappUpdate;
 
-        const autoVersion = await waVersionMutex.runExclusive(async () => {
-          let wv = waVersionCache.get("waVersion");
-
-          if (!wv) {
-            wv = await getProjectWAVersion();
-
-            if (!wv) {
-              // anything will be greater
-              return [2, 2300, 0];
-            }
-
-            waVersionCache.set("waVersion", wv);
-          }
-
-          return wv;
-        });
-
         const isLegacy = provider === "stable";
 
-        const version = getGreaterVersion(autoVersion, waVersion);
+        const version = waVersion;
 
         logger.info(`using WA v${version.join(".")}`);
         logger.info(`isLegacy: ${isLegacy}`);
@@ -278,9 +225,9 @@ export const initWASocket = async (
         };
 
         const appName =
-          (await GetPublicSettingService({ key: "appName" })) || "RC-CHAT";
+          (await GetPublicSettingService({ key: "appName" })) || "Ticketz";
         const hostName = process.env.BACKEND_URL?.split("/")[2];
-        const appVersion = GitInfo.branchName || GitInfo.commitHash;
+        const appVersion = GitInfo.tagName || GitInfo.commitHash;
         const clientName = `${appName} ${appVersion}${
           hostName ? ` - ${hostName}` : ""
         }`;

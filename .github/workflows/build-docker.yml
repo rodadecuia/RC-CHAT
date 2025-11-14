@@ -3,7 +3,7 @@ name: Create and publish multi-arch Docker images
 on:
   push:
     branches:
-      - 'main'
+      - 'stable'
       - 'beta'
       - 'fix/**'
       - 'dev'
@@ -79,7 +79,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=rc-chat-backend
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/stable' }}
             type=raw,value=beta,enable=${{ github.ref == 'refs/heads/beta' }}
             type=sha
 
@@ -93,7 +93,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=rc-chat-frontend
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/stable' }}
             type=raw,value=beta,enable=${{ github.ref == 'refs/heads/beta' }}
             type=sha
 
