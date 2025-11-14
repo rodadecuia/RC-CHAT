@@ -92,7 +92,7 @@ export async function validateClientProductLogin(
 
     if (isProductMapped) {
       // Encontramos um produto ativo e mapeado. Agora, validamos a senha.
-      if (product.password === servicePassword) {
+      if (product.password.trim() === servicePassword.trim()) {
         logger.info(`[WHMCS] Login success for client ${clientId} with product ID: ${product.pid}`);
         // Retornamos o ID do produto, o ID do cliente e a data de vencimento
         return {
