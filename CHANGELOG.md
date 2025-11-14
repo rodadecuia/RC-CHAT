@@ -89,6 +89,7 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
 - **Autenticação via Token:** Corrigido o middleware de autenticação de token para garantir que o envio de mensagens via API funcione corretamente.
 - **Importação de Contatos:** Desativada a importação automática de contatos ao conectar uma nova conta do WhatsApp, mantendo apenas a importação manual.
 - **Exibição do Ícone Wavoip:** Ajustada a lógica de verificação para garantir que o ícone de chamada de voz (`wavoip`) seja exibido corretamente, mesmo em ambientes de desenvolvimento sem `https`.
+- **WHMCS Product ID em Planos:** Corrigido o salvamento e associação do `whmcsProductId` nos planos.
 -   **Erro 502 Bad Gateway (Múltiplas Causas):**
     -   **Conflito de Rede:** Corrigido o `docker-compose.yml` para garantir que o `nginx-proxy` e o `frontend` estejam na mesma rede Docker, permitindo a comunicação.
     -   **Conflito de Configuração:** Resolvido um problema onde o `nginx-proxy` detectava incorretamente o container do `backend` como um host virtual, causando um balanceamento de carga incorreto.
@@ -111,3 +112,18 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
     -   As instruções de instalação foram atualizadas para refletir o novo processo interativo de 2 passos (`curl` para baixar, `sudo ./setup.sh` para executar).
 -   **`docs/whmcs-config.md`:**
     -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.
+
+### 🗓️ 2024-07-31 15:30:00 - Correções e Melhorias Adicionais
+
+- **Ordenação alfabética da lista de conexões**
+- **Atualização do componente de renderização de mensagens "React Whatsmarked"**
+- **Exibição de nomes mencionados em grupos**
+- **Atualização da libzapitu para a versão 1.0.0-alpha.9**
+- **Correção no suporte à recepção de eventos "digitando" e "gravando"**
+- **Detecção do país do usuário por geolocalização** (serviço do navegador ou por localização do IP) para a tela de adição de contatos
+- **Novo campo com código de país na tela de adição de contatos**
+- **Tratamento na duplicidade de contatos** com e sem o nono dígito de celular
+- **Ajuste nos ícones de status das mensagens enviadas**
+- **Refatoração da lógica de carregamento de países** e adição da função `getCountryes` para exportação.
+- **Integração do contexto Formik** no componente `PhoneNumberInput`.
+- **Uso do componente `PhoneNumberInput`** para o campo de número de telefone no `ContactModal`.

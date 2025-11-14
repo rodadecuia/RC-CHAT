@@ -1186,6 +1186,11 @@ const messages = {
           international: "Internacional em US$",
         }
       },
+      phoneNumberInput: {
+        country: "País",
+        localNumber: "Número Local",
+        phoneNumber: "Número de Telefone",
+      },
     },
   },
 };

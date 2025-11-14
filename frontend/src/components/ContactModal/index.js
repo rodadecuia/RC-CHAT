@@ -25,6 +25,7 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SelectLanguage } from "../SelectLanguage";
 import { TagsContainer } from "../TagsContainer";
+import { PhoneNumberInput } from "../PhoneNumberInput";
 import useSettings from "../../hooks/useSettings";
 
 const useStyles = makeStyles(theme => ({
@@ -35,6 +36,7 @@ const useStyles = makeStyles(theme => ({
 	textField: {
 		marginRight: theme.spacing(1),
 		flex: 1,
+    width: '100%',
 	},
 
 	extraAttr: {
@@ -75,8 +77,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 		number: "",
 		email: "",
     language: localStorage.getItem("language") || "",
-		disableBot: false,
-    whmcsClientId: null, // Adicionado whmcsClientId
+		disableBot: false
 	};
 
 	const [contact, setContact] = useState(initialState);
@@ -149,7 +150,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 						}, 400);
 					}}
 				>
-					{({ values, errors, touched, isSubmitting, setFieldValue }) => (
+					{({ values, errors, touched, isSubmitting }) => (
 						<Form>
 							<DialogContent dividers>
 								<Typography variant="subtitle1" gutterBottom>
@@ -166,22 +167,23 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 									margin="dense"
 									className={classes.textField}
 								/>
-								<Field
-									as={TextField}
-									label={i18n.t("contactModal.form.number")}
-									name="number"
-									error={touched.number && Boolean(errors.number)}
-									helperText={touched.number && errors.number}
-									placeholder="5513912344321"
-									variant="outlined"
-									margin="dense"
-								/>
-								<div>
-									<Field
-										as={TextField}
-										label={i18n.t("contactModal.form.email")}
-										name="email"
-										error={touched.email && Boolean(errors.email)}
+                <div>
+                  <Field
+                    as={PhoneNumberInput}
+                    label={i18n.t("contactModal.form.number")}
+                    name="number"
+                    error={touched.number && Boolean(errors.number)}
+                    helperText={touched.number && errors.number}
+                    variant="outlined"
+                    margin="dense"
+                  />
+                </div>
+                <div>
+                  <Field
+                    as={TextField}
+                    label={i18n.t("contactModal.form.email")}
+                    name="email"
+                    error={touched.email && Boolean(errors.email)}
 										helperText={touched.email && errors.email}
 										placeholder="Email address"
 										fullWidth
@@ -199,19 +201,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                   >
                   </Field>
                 </div>
-                {/* Campo WHMCS Client ID */}
-                {contactId && ( // Só mostra se for edição
-                  <Field
-                    as={TextField}
-                    label="WHMCS Client ID"
-                    name="whmcsClientId"
-                    variant="outlined"
-                    margin="dense"
-                    fullWidth
-                    type="number"
-                    onChange={(e) => setFieldValue('whmcsClientId', e.target.value === '' ? null : Number(e.target.value))}
-                  />
-                )}
 								<>
 								<FormControlLabel
 									label={i18n.t("contactModal.form.disableBot")}

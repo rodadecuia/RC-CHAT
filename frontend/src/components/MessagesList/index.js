@@ -712,12 +712,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
     });
   };
 
-  const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  };
-
   const handleScroll = (e) => {
     if (!hasMore) return;
     const { scrollTop } = e.currentTarget;
@@ -852,12 +846,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
     if (message.ack === 2) {
       return <DoneAll fontSize="small" className={classes.ackIcons} />;
     }
-    if (message.ack === 3) {
-      return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} />;
-    }
-    if (message.ack === 4) {
+    if (message.ack >= 3) { // For ack 3 (READ) and 4 (PLAYED), both are "read" visually
       return <DoneAll fontSize="small" className={classes.ackDoneReadIcon} />;
     }
+    return null;
   };
 
   const renderDailyTimestamps = (message, index) => {

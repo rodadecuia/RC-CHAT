@@ -1179,6 +1179,11 @@ const messages = {
           international: "Donaciones en USD",
         }
       },
+      phoneNumberInput: {
+        country: "País",
+        localNumber: "Número Local",
+        phoneNumber: "Número de Teléfono",
+      },
     },
   },
 };
