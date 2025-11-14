@@ -62,9 +62,14 @@ const CreateUserService = async ({
         "Check-email",
         "An user with this email already exists.",
         async value => {
-          if (!value) return false;
+          // Verifica explicitamente por undefined/null/string vazia novamente,
+          // mesmo que .required() deva lidar com isso.
+          // Esta é uma medida defensiva contra o erro do Sequelize observado.
+          if (!value || typeof value !== 'string' || value.trim() === '') {
+            return false;
+          }
           const emailExists = await User.findOne({
-            where: { email: value }
+            where: { email: value.trim() } // Usa trim() para lidar com espaços em branco
           });
           return !emailExists;
         }
@@ -80,7 +85,7 @@ const CreateUserService = async ({
 
   const user = await User.create(
     {
-      email,
+      email: email.trim(), // Limpa o email antes da criação
       password,
       name,
       companyId,
