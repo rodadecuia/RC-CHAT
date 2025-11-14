@@ -1,21 +1,19 @@
 import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import Company from "../../models/Company";
-import User from "../../models/User";
 import Setting from "../../models/Setting";
 
 interface CompanyData {
   name: string;
   phone?: string;
   email?: string;
-  password?: string;
   status?: boolean;
   planId?: number;
   campaignsEnabled?: boolean;
   dueDate?: string;
   recurrence?: string;
   language?: string;
-  whmcsClientId?: number; // Adicionado whmcsClientId
+  whmcsClientId?: number;
 }
 
 const CreateCompanyService = async (
@@ -27,12 +25,10 @@ const CreateCompanyService = async (
     email,
     status,
     planId,
-    password,
-    campaignsEnabled,
     dueDate,
     recurrence,
     language,
-    whmcsClientId // Adicionado whmcsClientId
+    whmcsClientId
   } = companyData;
 
   const companySchema = Yup.object().shape({
@@ -47,7 +43,6 @@ const CreateCompanyService = async (
             const companyWithSameName = await Company.findOne({
               where: { name: value }
             });
-
             return !companyWithSameName;
           }
           return false;
@@ -70,22 +65,8 @@ const CreateCompanyService = async (
     dueDate,
     recurrence,
     language,
-    whmcsClientId // Adicionado whmcsClientId
+    whmcsClientId
   });
-  const [user, created] = await User.findOrCreate({
-    where: { name, email },
-    defaults: {
-      name,
-      email,
-      password: password || "123456",
-      profile: "admin",
-      companyId: company.id
-    }
-  });
-
-  if (!created) {
-    await user.update({ companyId: company.id });
-  }
 
   await Setting.findOrCreate({
     where: {
@@ -99,7 +80,6 @@ const CreateCompanyService = async (
     }
   });
 
-  // CheckMsgIsGroup
   await Setting.findOrCreate({
     where: {
       companyId: company.id,
@@ -112,11 +92,10 @@ const CreateCompanyService = async (
     }
   });
 
-  // CheckMsgIsGroup
   await Setting.findOrCreate({
     where: {
       companyId: company.id,
-      key: ""
+      key: "call"
     },
     defaults: {
       companyId: company.id,
@@ -125,7 +104,6 @@ const CreateCompanyService = async (
     }
   });
 
-  // scheduleType
   await Setting.findOrCreate({
     where: {
       companyId: company.id,
@@ -138,7 +116,6 @@ const CreateCompanyService = async (
     }
   });
 
-  // userRating
   await Setting.findOrCreate({
     where: {
       companyId: company.id,

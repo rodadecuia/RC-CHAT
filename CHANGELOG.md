@@ -41,6 +41,20 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
+### 🗓️ 2024-11-14 12:00:00 - Melhorias na Associação de Empresas e Segurança
+
+#### 🚀 Novas Funcionalidades
+
+-   **Associação Inteligente de Empresas via WHMCS:**
+    -   Aprimorado o fluxo de login para clientes WHMCS. Se uma empresa ainda não está vinculada a um `whmcsClientId`, o sistema agora tenta localizá-la pelo e-mail do administrador.
+    -   Se um usuário com o perfil `admin` e o e-mail correspondente for encontrado, a empresa dele será automaticamente vinculada ao cliente WHMCS, evitando a criação de empresas duplicadas.
+
+#### 🔒 Melhorias de Segurança
+
+-   **Validação de Perfil na Associação de Empresas:**
+    -   Adicionada uma camada de segurança para impedir que um e-mail pertencente a um operador (perfil `user`) seja usado para vincular uma empresa a um cliente WHMCS.
+    -   Se a tentativa de associação for feita com um e-mail de operador, o processo é bloqueado e uma mensagem de erro apropriada é exibida.
+
 ### 🗓️ 2024-11-14 11:00:00 - Log de Auditoria de Tickets e Melhorias de Login
 
 #### 🚀 Novas Funcionalidades

@@ -68,12 +68,15 @@ export async function validateClientProductLogin(
   });
 
   if (!productsData.products || !productsData.products.product) {
+    logger.warn({ productsData }, "[WHMCS] No active products found for this client.");
     throw new Error("No active products found for this client");
   }
 
   const clientProducts = Array.isArray(productsData.products.product)
     ? productsData.products.product
     : [productsData.products.product];
+
+  logger.debug({ clientProducts }, "[WHMCS] Found client products.");
 
   // Passo 3: Buscar no RC-CHAT todos os planos que têm um mapeamento com o WHMCS
   const mappedPlans = await Plan.findAll({
@@ -82,15 +85,21 @@ export async function validateClientProductLogin(
   });
 
   if (mappedPlans.length === 0) {
+    logger.warn("[WHMCS] No plans in RC-CHAT are mapped to WHMCS products.");
     throw new Error("No plans in RC-CHAT are mapped to WHMCS products.");
   }
 
+  logger.debug({ mappedPlans: mappedPlans.map(p => p.whmcsProductId) }, "[WHMCS] Found mapped plans in RC-CHAT.");
+
   // Passo 4: Iterar sobre os produtos do cliente e encontrar uma correspondência
   for (const product of clientProducts) {
+    logger.debug({ productId: product.pid, productName: product.name }, "[WHMCS] Checking product...");
     // Verifica se o produto do cliente corresponde a algum plano mapeado no RC-CHAT
     const isProductMapped = mappedPlans.some(plan => plan.whmcsProductId === product.pid);
 
     if (isProductMapped) {
+      logger.info(`[WHMCS] Product with ID ${product.pid} is mapped. Comparing passwords.`);
+      logger.debug(`[WHMCS] WHMCS Password: '${product.password.trim()}' | Provided Password: '${servicePassword.trim()}'`);
       // Encontramos um produto ativo e mapeado. Agora, validamos a senha.
       if (product.password.trim() === servicePassword.trim()) {
         logger.info(`[WHMCS] Login success for client ${clientId} with product ID: ${product.pid}`);
@@ -100,11 +109,16 @@ export async function validateClientProductLogin(
           productId: product.pid,
           nextDueDate: product.nextduedate
         };
+      } else {
+        logger.warn(`[WHMCS] Password mismatch for product ID ${product.pid}.`);
       }
+    } else {
+      logger.warn(`[WHMCS] Product with ID ${product.pid} is not mapped to any plan.`);
     }
   }
 
   // Se o loop terminar e nenhuma senha bater, ou nenhum produto for mapeado
+  logger.error("[WHMCS] No active, mapped product with a matching password was found after checking all products.");
   throw new Error("No active, mapped product with a matching password was found.");
 }
 
