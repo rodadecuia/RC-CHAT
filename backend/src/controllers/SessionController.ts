@@ -82,14 +82,23 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         logger.info(`[WHMCS] New company '${company.name}' created with ID: ${company.id} and WHMCS Client ID: ${company.whmcsClientId}`);
 
         // Criar um usuário administrador padrão para a nova empresa
-        user = await CreateUserService({
+        const createdAdmin = await CreateUserService({
           name: "Admin WHMCS", // Nome padrão para o admin da empresa WHMCS
           email: email, // Usar o email do WHMCS como email do admin
           password: Math.random().toString(36).substring(2, 15), // Gerar uma senha aleatória
           profile: "admin",
-          companyId: company.id,
+          companyId: company.id
         });
-        logger.info(`[WHMCS] Admin user '${user.email}' created for new company ID: ${company.id}`);
+        // Recuperar o modelo completo do usuário para uso na criação dos tokens
+        user = await User.findByPk(createdAdmin.id);
+        if (!user) {
+          // fallback por chave de e-mail caso o PK não esteja disponível por algum motivo
+          user = await User.findOne({ where: { email } });
+        }
+        if (!user) {
+          throw new AppError("ERR_NO_USER_FOUND", 404);
+        }
+        logger.info(`[WHMCS] Admin user '${createdAdmin.email}' created for new company ID: ${company.id}`);
 
       } else {
         // Se a empresa já existe, sincronizar o plano e encontrar o usuário admin

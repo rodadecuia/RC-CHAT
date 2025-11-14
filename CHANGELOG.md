@@ -41,6 +41,12 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
+### 🗓️ 2024-11-13 22:45:00 - Correção de Tipagem na Criação de Empresas WHMCS
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+- **Tipagem de `whmcsClientId`:** Adicionado `whmcsClientId` à interface `CompanyData` em `CreateCompanyService.ts`, resolvendo erro de tipagem ao criar empresas via WHMCS.
+
 ### 🗓️ 2024-11-13 22:30:00 - Automação de Criação de Empresas WHMCS
 
 #### 🚀 Novas Funcionalidades
@@ -146,4 +152,4 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
     -   O arquivo foi completamente reescrito para focar no público de língua portuguesa.
     -   As instruções de instalação foram atualizadas para refletir o novo processo interativo de 2 passos (`curl` para baixar, `sudo ./setup.sh` para executar).
 -   **`docs/whmcs-config.md`:**
-    -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.
+    -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.<ctrl46>}
