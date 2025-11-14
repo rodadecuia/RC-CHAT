@@ -754,10 +754,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
         <>
           { <ModalImageCors imageUrl={message.mediaUrl} isDeleted={message.isDeleted} /> }
           <>
-            <div className={[clsx({
+            <div className={clsx({
               [classes.textContentItemDeleted]: message.isDeleted,
               [classes.textContentItem]: !message.isDeleted,
-            }),]}>
+            })}>
               {message.body &&
                 <>
                   <WhatsMarked>
@@ -792,16 +792,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
       return (
         <>
           <video
-            className={[clsx(classes.messageVideo, {
+            className={clsx(classes.messageVideo, {
               [classes.messageMediaDeleted]: message.isDeleted
-            })]}
+            })}
             src={message.mediaUrl}
             controls
           />
           <div className={clsx({
             [classes.textContentItemDeleted]: message.isDeleted,
             [classes.textContentItem]: !message.isDeleted,
-          }),]}>
+          })}>
             {message.body &&
               <>
                 <WhatsMarked>
@@ -828,9 +828,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
           </div>
           {message.body !== document?.fileName &&
             <>
-              <div className={[clsx({
+              <div className={clsx({
                 [classes.textContentItemDeleted]: message.isDeleted,
-              }),]}>
+              })}>
                 <WhatsMarked>
                   { message.body }
                 </WhatsMarked>
@@ -906,7 +906,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
   const scrollToMessage = (id) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollInView({ behavior: 'smooth' });
 
       // Add the highlight class
       element.classList.add(classes.messageHighlighted);
@@ -1272,7 +1272,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
         () => {
           window.open(mapUrl, '_blank');
         }
-      } className={[clsx(classes.textContentItem, classes.messageLocation)]}>
+      } className={clsx(classes.textContentItem, classes.messageLocation)}>
         <div>
         { location?.jpegThumbnail ? 
         <img src={`data:image/png;base64, ${location.jpegThumbnail}`} className={classes.imageLocation} />
@@ -1332,9 +1332,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
             <div id={message.id}
-              className={[clsx(classes.messageContainer, classes.messageLeft, {
+              className={clsx(classes.messageContainer, classes.messageLeft, {
                 [classes.messageMediaSticker]: isSticker,
-              })]}
+              })}
               title={message.queueId && message.queue?.name}
             >
               <IconButton
@@ -1366,18 +1366,18 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
                 :
                 isVCard(message.body) ?
                   <div
-                    className={[clsx(classes.textContentItem, {
+                    className={clsx(classes.textContentItem, {
                       [classes.textContentItemEdited]: message.isEdited
-                    }), { marginRight: 0 }]}>
+                    })}>
                     {renderVCard(message.body)}
                   </div>
 
                   :
 
-                  (<div className={[clsx(classes.textContentItem, {
+                  (<div className={clsx(classes.textContentItem, {
                     [classes.textContentItemDeleted]: message.isDeleted,
                     [classes.textContentItemEdited]: message.isEdited
-                  }),]}>
+                  })}>
                     {message.quotedMsg && renderQuotedMessage(message)}
                     {renderLinkPreview(message)}
                     {!isSticker && (
@@ -1398,9 +1398,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
                         </>
                     )
                     }
-                    <span className={[clsx(classes.timestamp, {
+                    <span className={clsx(classes.timestamp, {
                       [classes.timestampStickerLeft]: isSticker
-                    })]}>
+                    })}>
                       {message.isEdited && <span> {i18n.t("message.edited")} </span>}
                       {format(parseISO(message.createdAt), "HH:mm")}
                     </span>
@@ -1417,9 +1417,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
             <div id={message.id}
-              className={[clsx(classes.messageContainer, classes.messageRight, {
+              className={clsx(classes.messageContainer, classes.messageRight, {
                 [classes.messageMediaSticker]: isSticker,
-              })]}
+              })}
               title={message.queueId && message.queue?.name}
             >
               <IconButton
@@ -1460,7 +1460,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
                 { data?.message?.locationMessage ? messageLocation(data, message.createdAt)
                   :
                   isVCard(message.body) ?
-                    <div className={[classes.textContentItem]}>
+                    <div className={classes.textContentItem}>
                       {renderVCard(message.body)}
                     </div>
 
@@ -1471,9 +1471,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
                   message.mediaUrl ? "" : <WhatsMarked>{message.body}</WhatsMarked>
                 )
                 }
-                <span className={[clsx(classes.timestamp, {
+                <span className={clsx(classes.timestamp, {
                   [classes.timestampStickerRight]: isSticker
-                })]}>
+                })}>
                   {message.isEdited && <span> {i18n.t("message.edited")} </span>}
                   {format(parseISO(message.createdAt), "HH:mm")}
                   {renderMessageAck(message)}
