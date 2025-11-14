@@ -12,11 +12,21 @@ interface PlanData {
   value?: number;
   currency?: string;
   isPublic?: boolean;
+  whmcsProductId?: number;
 }
 
 const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
-  const { id, name, users, connections, queues, value, currency, isPublic } =
-    planData;
+  const {
+    id,
+    name,
+    users,
+    connections,
+    queues,
+    value,
+    currency,
+    isPublic,
+    whmcsProductId
+  } = planData;
 
   const plan = await Plan.findByPk(id);
 
@@ -27,19 +37,16 @@ const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
   const planSchema = Yup.object().shape({
     name: Yup.string()
       .min(2, "ERR_PLAN_INVALID_NAME")
-      .test(
-        "Check-unique-name",
-        "ERR_PLAN_NAME_ALREADY_EXISTS",
-        async (value) => {
-          if (value) {
-            const planWithSameName = await Plan.findOne({
-              where: { name: value, id: { [Op.ne]: id } }
-            });
-            return !planWithSameName;
-          }
-          return true;
+      .test("Check-unique-name", "ERR_PLAN_NAME_ALREADY_EXISTS", async val => {
+        if (val) {
+          const planWithSameName = await Plan.findOne({
+            where: { name: val, id: { [Op.ne]: id } }
+          });
+
+          return !planWithSameName;
         }
-      )
+        return true;
+      })
   });
 
   try {
@@ -55,7 +62,8 @@ const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
     queues,
     value,
     currency,
-    isPublic
+    isPublic,
+    whmcsProductId
   });
 
   return plan;

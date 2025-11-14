@@ -25,6 +25,7 @@ type StorePlanData = {
   value: number;
   currency?: string;
   isPublic: boolean;
+  whmcsProductId?: number;
 };
 
 type UpdatePlanData = {
@@ -36,6 +37,7 @@ type UpdatePlanData = {
   value?: number;
   currency?: string;
   isPublic?: boolean;
+  whmcsProductId?: number;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -94,8 +96,17 @@ export const update = async (
 ): Promise<Response> => {
   const planData: UpdatePlanData = req.body;
 
-  const { id, name, users, connections, queues, value, currency, isPublic } =
-    planData;
+  const {
+    id,
+    name,
+    users,
+    connections,
+    queues,
+    value,
+    currency,
+    isPublic,
+    whmcsProductId
+  } = planData;
 
   const plan = await UpdatePlanService({
     id,
@@ -105,7 +116,8 @@ export const update = async (
     queues,
     value,
     currency,
-    isPublic
+    isPublic,
+    whmcsProductId
   });
 
   return res.status(200).json(plan);

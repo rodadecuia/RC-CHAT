@@ -10,6 +10,7 @@ interface PlanData {
   value: number;
   currency?: string;
   isPublic: boolean;
+  whmcsProductId?: number;
 }
 
 const CreatePlanService = async (planData: PlanData): Promise<Plan> => {
