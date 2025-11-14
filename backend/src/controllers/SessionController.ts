@@ -101,7 +101,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         logger.info(`[WHMCS] Admin user '${createdAdmin.email}' created for new company ID: ${company.id}`);
 
       } else {
-        // Se a empresa já existe, sincronizar o plano e encontrar o usuário admin
+        // Se a empresa já existe, sincronizar o plano e encontrar/criar o usuário admin
         const plan = await Plan.findOne({ where: { whmcsProductId } });
         if (plan && company.planId !== plan.id) {
           logger.info(`[WHMCS] Syncing plan for company ${company.id}. Old: ${company.planId}, New: ${plan.id}`);
@@ -113,8 +113,27 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
           where: { companyId: company.id, profile: "admin" },
           order: [["createdAt", "ASC"]]
         });
+
         if (!user) {
-          throw new AppError(`[WHMCS] Company ${company.id} found, but no admin user configured.`, 404);
+          logger.info(`[WHMCS] Company ${company.id} found, but no admin user configured. Attempting to create one.`);
+          // Criar um usuário administrador padrão para a empresa existente
+          const createdAdmin = await CreateUserService({
+            name: "Admin WHMCS", // Nome padrão para o admin da empresa WHMCS
+            email: email, // Usar o email do WHMCS como email do admin
+            password: Math.random().toString(36).substring(2, 15), // Gerar uma senha aleatória
+            profile: "admin",
+            companyId: company.id
+          });
+          // Recuperar o modelo completo do usuário para uso na criação dos tokens
+          user = await User.findByPk(createdAdmin.id);
+          if (!user) {
+            // fallback por chave de e-mail caso o PK não esteja disponível por algum motivo
+            user = await User.findOne({ where: { email } });
+          }
+          if (!user) {
+            throw new AppError("ERR_NO_USER_FOUND_AFTER_CREATION", 404); // Alterado para clareza
+          }
+          logger.info(`[WHMCS] Admin user '${createdAdmin.email}' created for existing company ID: ${company.id}`);
         }
       }
 
