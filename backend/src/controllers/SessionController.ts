@@ -75,7 +75,6 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         // Criar a nova empresa no RC-CHAT
         company = await CreateCompanyService({
           name: companyName,
-          id: undefined, // O ID será auto-incrementado
           planId: plan.id,
           whmcsClientId: clientId,
           // Outros campos padrão para a empresa, se houver

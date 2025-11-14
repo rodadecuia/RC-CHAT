@@ -103,3 +103,16 @@ export async function validateClientProductLogin(
   // Se o loop terminar e nenhuma senha bater, ou nenhum produto for mapeado
   throw new Error("No active, mapped product with a matching password was found.");
 }
+
+/**
+ * Obtém os detalhes de um cliente específico do WHMCS.
+ * @param clientId O ID do cliente no WHMCS.
+ * @returns Os detalhes do cliente.
+ */
+export async function getClientDetails(clientId: number): Promise<any> {
+  const clientData = await callWhmcsApi("GetClientsDetails", { clientid: clientId });
+  if (!clientData || !clientData.client) {
+    throw new Error(`Client details not found for ID: ${clientId} in WHMCS`);
+  }
+  return clientData.client;
+}
