@@ -5,8 +5,9 @@ COPY . .
 
 ENV NODE_OPTIONS --openssl-legacy-provider
 
+# Removido '--no-cache sharp' para permitir que npm ci gerencie o cache de forma padrão
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --no-cache sharp && npm run build
+    npm ci && npm run build
 
 FROM ghcr.io/ticketz-oss/nginx-alpine
 
