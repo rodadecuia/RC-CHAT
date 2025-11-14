@@ -1,3 +1,4 @@
+import * as Yup from "yup";
 import { Op } from "sequelize";
 import AppError from "../../errors/AppError";
 import Company from "../../models/Company";
@@ -35,6 +36,30 @@ const UpdateCompanyService = async (
 
   if (!company) {
     throw new AppError("ERR_NO_COMPANY_FOUND", 404);
+  }
+
+  const companySchema = Yup.object().shape({
+    name: Yup.string()
+      .min(2, "ERR_COMPANY_INVALID_NAME")
+      .test(
+        "Check-unique-name",
+        "ERR_COMPANY_NAME_ALREADY_EXISTS",
+        async (value) => {
+          if (value) {
+            const companyWithSameName = await Company.findOne({
+              where: { name: value, id: { [Op.ne]: company.id } }
+            });
+            return !companyWithSameName;
+          }
+          return true;
+        }
+      )
+  });
+
+  try {
+    await companySchema.validate({ name });
+  } catch (err: any) {
+    throw new AppError(err.message);
   }
 
   const previousPlanId = company.planId;

@@ -94,16 +94,6 @@ export const update = async (
 ): Promise<Response> => {
   const planData: UpdatePlanData = req.body;
 
-  const schema = Yup.object().shape({
-    name: Yup.string()
-  });
-
-  try {
-    await schema.validate(planData);
-  } catch (err) {
-    throw new AppError(err.message);
-  }
-
   const { id, name, users, connections, queues, value, currency, isPublic } =
     planData;
 

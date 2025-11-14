@@ -41,15 +41,15 @@ async function callWhmcsApi(action: string, params: any): Promise<any> {
 
 /**
  * Valida as credenciais de um cliente final contra a API do WHMCS.
- * Esta nova versão é mais flexível e não depende de um WHMCS_PRODUCT_ID fixo.
+ * Retorna o ID do cliente, o ID do produto e a próxima data de vencimento.
  * @param email O e-mail do cliente.
  * @param servicePassword A senha do produto/serviço específico.
- * @returns Um objeto com o ID do cliente e o ID do produto do WHMCS se a validação for bem-sucedida.
+ * @returns Um objeto com o ID do cliente, o ID do produto e a data de vencimento.
  */
 export async function validateClientProductLogin(
   email: string,
   servicePassword?: string
-): Promise<{ clientId: number; productId: number }> {
+): Promise<{ clientId: number; productId: number; nextDueDate: string }> {
 
   logger.info(`[WHMCS] Starting validation for email: ${email}`);
 
@@ -94,8 +94,12 @@ export async function validateClientProductLogin(
       // Encontramos um produto ativo e mapeado. Agora, validamos a senha.
       if (product.password === servicePassword) {
         logger.info(`[WHMCS] Login success for client ${clientId} with product ID: ${product.pid}`);
-        // Retornamos o ID do produto do WHMCS (pid) para a sincronização de planos
-        return { clientId: clientId, productId: product.pid };
+        // Retornamos o ID do produto, o ID do cliente e a data de vencimento
+        return {
+          clientId: clientId,
+          productId: product.pid,
+          nextDueDate: product.nextduedate
+        };
       }
     }
   }

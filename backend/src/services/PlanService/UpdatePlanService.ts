@@ -1,3 +1,5 @@
+import * as Yup from "yup";
+import { Op } from "sequelize";
 import AppError from "../../errors/AppError";
 import Plan from "../../models/Plan";
 
@@ -20,6 +22,30 @@ const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
 
   if (!plan) {
     throw new AppError("ERR_NO_PLAN_FOUND", 404);
+  }
+
+  const planSchema = Yup.object().shape({
+    name: Yup.string()
+      .min(2, "ERR_PLAN_INVALID_NAME")
+      .test(
+        "Check-unique-name",
+        "ERR_PLAN_NAME_ALREADY_EXISTS",
+        async (value) => {
+          if (value) {
+            const planWithSameName = await Plan.findOne({
+              where: { name: value, id: { [Op.ne]: id } }
+            });
+            return !planWithSameName;
+          }
+          return true;
+        }
+      )
+  });
+
+  try {
+    await planSchema.validate({ name });
+  } catch (err: any) {
+    throw new AppError(err.message);
   }
 
   await plan.update({

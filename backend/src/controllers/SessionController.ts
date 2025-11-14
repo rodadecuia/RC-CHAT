@@ -54,7 +54,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
     try {
       // --- TENTATIVA 2: FALLBACK PARA LOGIN VIA WHMCS (CLIENTE FINAL) ---
-      const { clientId, productId: whmcsProductId } = await validateClientProductLogin(email, password);
+      const { clientId, productId: whmcsProductId, nextDueDate } = await validateClientProductLogin(email, password);
 
       let company = await Company.findOne({ where: { whmcsClientId: clientId } });
       let user: User;
@@ -77,7 +77,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
           name: companyName,
           planId: plan.id,
           whmcsClientId: clientId,
-          // Outros campos padrão para a empresa, se houver
+          dueDate: nextDueDate
         });
         logger.info(`[WHMCS] New company '${company.name}' created with ID: ${company.id} and WHMCS Client ID: ${company.whmcsClientId}`);
 

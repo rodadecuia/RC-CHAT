@@ -1,4 +1,3 @@
-import * as Yup from "yup";
 import { Request, Response } from "express";
 import axios from "axios";
 import moment from "moment";
@@ -50,16 +49,6 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const newCompany: CompanyData = req.body;
-
-  const schema = Yup.object().shape({
-    name: Yup.string().required()
-  });
-
-  try {
-    await schema.validate(newCompany);
-  } catch (err) {
-    throw new AppError(err.message);
-  }
 
   const company = await CreateCompanyService(newCompany);
 
@@ -117,17 +106,6 @@ export const update = async (
   res: Response
 ): Promise<Response> => {
   const companyData: CompanyData = req.body;
-
-  const schema = Yup.object().shape({
-    name: Yup.string()
-  });
-
-  try {
-    await schema.validate(companyData);
-  } catch (err) {
-    throw new AppError(err.message);
-  }
-
   const { id } = req.params;
 
   const company = await UpdateCompanyService({ id, ...companyData });
