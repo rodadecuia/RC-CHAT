@@ -1650,13 +1650,32 @@ const handleMessage = async (
             logger.debug(
               `ticket ${ticketTracking.ticketId} reopen by contact request`
             );
-            ticketTracking.update({
+            await ticketTracking.update({
               ratingAt: null
             });
-            updateTicket(ticketTracking.ticket, {
-              status: "open",
-              userId: ticketTracking.userId
-            });
+
+            const reopenTicketToPreviousAgent = await GetCompanySetting(
+              companyId,
+              "reopenTicketToPreviousAgent",
+              "disabled"
+            );
+
+            if (reopenTicketToPreviousAgent === "enabled") {
+              await updateTicket(ticketTracking.ticket, {
+                status: "pending",
+                userId: ticketTracking.userId
+              });
+              await updateTicket(ticketTracking.ticket, {
+                status: "open",
+                userId: ticketTracking.userId
+              });
+            } else {
+              await updateTicket(ticketTracking.ticket, {
+                status: "pending",
+                userId: null
+              });
+            }
+
             quickMessage(
               wbot,
               ticketTracking.ticket,

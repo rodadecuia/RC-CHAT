@@ -118,6 +118,7 @@ export default function Options(props) {
   const [audioTranscriptions, setAudioTranscriptions] = useState("disabled");
   const [uploadLimit, setUploadLimit] = useState("15");
   const [downloadLimit, setDownloadLimit] = useState("15");
+  const [reopenTicketToPreviousAgent, setReopenTicketToPreviousAgent] = useState("disabled");
 
   const [messageVisibility, setMessageVisibility] = useState("message");
 
@@ -269,6 +270,9 @@ export default function Options(props) {
 
       const transferMessage = settings.find((s) => s.key === "transferMessage");
       setTransferMessage(transferMessage?.value || "");
+
+      const reopenTicketToPreviousAgent = settings.find((s) => s.key === "reopenTicketToPreviousAgent");
+      setReopenTicketToPreviousAgent(reopenTicketToPreviousAgent?.value || "disabled");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
@@ -434,6 +438,22 @@ export default function Options(props) {
             >
               <MenuItem value={"disabled"}>{i18n.t("settings.validations.options.disabled")}</MenuItem>
               <MenuItem value={"enabled"}>{i18n.t("settings.validations.options.enabled")}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="reopen-ticket-previous-agent-label">Reabrir ticket para atendente anterior</InputLabel>
+            <Select
+              labelId="reopen-ticket-previous-agent-label"
+              value={reopenTicketToPreviousAgent}
+              onChange={async (e) => {
+                handleSetting("reopenTicketToPreviousAgent", e.target.value, setReopenTicketToPreviousAgent);
+              }}
+            >
+              <MenuItem value={"disabled"}>Desativado</MenuItem>
+              <MenuItem value={"enabled"}>Ativado</MenuItem>
             </Select>
           </FormControl>
         </Grid>

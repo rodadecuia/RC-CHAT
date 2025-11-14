@@ -41,6 +41,27 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
+### 🗓️ 2024-11-14 10:00:00 - Melhorias na Reabertura de Tickets e Integração WHMCS
+
+#### 🚀 Novas Funcionalidades
+
+-   **Opção de Reabertura de Ticket para Atendente Anterior:**
+    -   Adicionada uma nova opção nas configurações para permitir que o administrador escolha o comportamento ao reabrir um ticket após a pesquisa de satisfação.
+    -   Quando ativada, se o cliente digitar `!` em vez de avaliar, o ticket é reatribuído diretamente ao atendente anterior.
+    -   Se desativada, o ticket volta para a fila, como era o comportamento padrão.
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+-   **Nome da Empresa na Criação via WHMCS:**
+    -   Aprimorada a lógica para definir o nome da empresa ao criá-la a partir de um login WHMCS.
+    -   O sistema agora prioriza o campo `companyname`. Se estiver vazio ou contiver apenas espaços, o nome será formado pelo `firstname` e `lastname` do cliente.
+-   **Sincronização da Data de Vencimento na Criação da Empresa:**
+    -   Corrigido o fluxo de criação de empresa via WHMCS para que a `dueDate` (data de vencimento) seja obtida e salva corretamente no momento da criação.
+-   **Edição de Planos e Empresas:**
+    -   Corrigida a validação de nomes duplicados ao editar planos e empresas, permitindo que as alterações sejam salvas corretamente.
+-   **Sincronização de Empresas:**
+    -   A função de sincronizar empresa agora também atualiza a data de vencimento (`dueDate`) a partir do WHMCS.
+
 ### 🗓️ 2024-11-13 22:45:00 - Correção de Tipagem na Criação de Empresas WHMCS
 
 #### 🐞 Correções de Erros (Bug Fixes)
@@ -152,4 +173,4 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
     -   O arquivo foi completamente reescrito para focar no público de língua portuguesa.
     -   As instruções de instalação foram atualizadas para refletir o novo processo interativo de 2 passos (`curl` para baixar, `sudo ./setup.sh` para executar).
 -   **`docs/whmcs-config.md`:**
-    -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.<ctrl46>}
+    -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.
