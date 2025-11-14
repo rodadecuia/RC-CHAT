@@ -15,6 +15,7 @@ interface CompanyData {
   dueDate?: string;
   recurrence?: string;
   language?: string;
+  whmcsClientId?: number; // Adicionado whmcsClientId
 }
 
 const CreateCompanyService = async (
@@ -30,7 +31,8 @@ const CreateCompanyService = async (
     campaignsEnabled,
     dueDate,
     recurrence,
-    language
+    language,
+    whmcsClientId // Adicionado whmcsClientId
   } = companyData;
 
   const companySchema = Yup.object().shape({
@@ -67,7 +69,8 @@ const CreateCompanyService = async (
     planId,
     dueDate,
     recurrence,
-    language
+    language,
+    whmcsClientId // Adicionado whmcsClientId
   });
   const [user, created] = await User.findOrCreate({
     where: { name, email },
