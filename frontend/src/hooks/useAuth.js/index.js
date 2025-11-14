@@ -116,27 +116,40 @@ const useAuth = () => {
     }
 
     moment.locale('pt-br');
-    const dueDate = data.user.company.dueDate;
+    // Protege contra ausência de company/dueDate no primeiro login
+    const dueDate = data?.user?.company?.dueDate;
     const hoje = moment(moment()).format("DD/MM/yyyy");
-    const vencimento = moment(dueDate).format("DD/MM/yyyy");
+    let vencimento = "";
+    let dias = null;
 
-    var diff = moment(dueDate).diff(moment(moment()).format());
-
-    var dias = moment.duration(diff).asDays();
+    if (dueDate && moment(dueDate).isValid()) {
+      vencimento = moment(dueDate).format("DD/MM/yyyy");
+      const diff = moment(dueDate).diff(moment());
+      dias = moment.duration(diff).asDays();
+    }
 
     localStorage.setItem("token", JSON.stringify(token));
     localStorage.setItem("companyId", companyId);
     localStorage.setItem("userId", data.user.id);
-    localStorage.setItem("companyDueDate", vencimento);
+    if (vencimento) {
+      localStorage.setItem("companyDueDate", vencimento);
+    } else {
+      localStorage.removeItem("companyDueDate");
+    }
     localStorage.setItem("impersonated", impersonated);
     api.defaults.headers.Authorization = `Bearer ${data.token}`;
     setUser(data.user);
     setIsAuth(true);
-    if (dias < 0) {
-      toast.warn(`Sua assinatura venceu há ${Math.round(dias) * -1} ${Math.round(dias) * -1 === 1 ? 'dia' : 'dias'} `);
-    } else if (Math.round(dias) < 5) {
-      toast.warn(`Sua assinatura vence em ${Math.round(dias)} ${Math.round(dias) === 1 ? 'dia' : 'dias'} `);
+    if (dias !== null) {
+      if (dias < 0) {
+        toast.warn(`Sua assinatura venceu há ${Math.round(dias) * -1} ${Math.round(dias) * -1 === 1 ? 'dia' : 'dias'} `);
+      } else if (Math.round(dias) < 5) {
+        toast.warn(`Sua assinatura vence em ${Math.round(dias)} ${Math.round(dias) === 1 ? 'dia' : 'dias'} `);
+      } else {
+        toast.success(i18n.t("auth.toasts.success"));
+      }
     } else {
+      // Sem dueDate definido, apenas confirma login com sucesso
       toast.success(i18n.t("auth.toasts.success"));
     }
     if (data.user.profile === "admin" && !data.user.hideAdminUI) {
