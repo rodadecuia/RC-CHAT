@@ -102,6 +102,7 @@ export default function Options(props) {
   const [userRating, setUserRating] = useState("disabled");
   const [scheduleType, setScheduleType] = useState("disabled");
   const [outOfHoursAction, setOutOfHoursAction] = useState("pending");
+  const [outOfHoursTransferQueueId, setOutOfHoursTransferQueueId] = useState("0");
   const [callType, setCallType] = useState("enabled");
   const [quickMessages, setQuickMessages] = useState("");
   const [defaultLanguage, setDefaultLanguage] = useState("");
@@ -172,6 +173,9 @@ export default function Options(props) {
       
       const outOfHoursAction = settings.find((s) => s.key === "outOfHoursAction");
       setOutOfHoursAction(outOfHoursAction?.value || "pending");
+
+      const outOfHoursTransferQueueId = settings.find((s) => s.key === "outOfHoursTransferQueueId");
+      setOutOfHoursTransferQueueId(outOfHoursTransferQueueId?.value || "0");
 
       const callType = settings.find((s) => s.key === "call");
       if (callType) {
@@ -764,9 +768,38 @@ export default function Options(props) {
             >
               <MenuItem value={"pending"}>{i18n.t("settings.outOfHoursAction.options.pending")}</MenuItem>
               <MenuItem value={"closed"}>{i18n.t("settings.outOfHoursAction.options.closed")}</MenuItem>
+              <MenuItem value={"transfer"}>{i18n.t("settings.outOfHoursAction.options.transfer")}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
+
+        {outOfHoursAction === "transfer" && (
+          <Grid xs={12} sm={6} md={4} item>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="out-of-hours-transfer-queue-label">
+                {i18n.t("settings.outOfHoursAction.transferQueueLabel")}
+              </InputLabel>
+              <Select
+                labelId="out-of-hours-transfer-queue-label"
+                value={outOfHoursTransferQueueId}
+                onChange={async (e) => {
+                  await handleSetting(
+                    "outOfHoursTransferQueueId",
+                    e.target.value,
+                    setOutOfHoursTransferQueueId
+                  );
+                }}
+              >
+                <MenuItem value={"0"}>{i18n.t("common.close")}</MenuItem>
+                {queues.map((queue) => (
+                  <MenuItem key={queue.id} value={String(queue.id)}>
+                    {i18n.t("common.transferTo")} {queue.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
         
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>{i18n.t("settings.group.groups")}</h2>

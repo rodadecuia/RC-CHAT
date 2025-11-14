@@ -854,7 +854,9 @@ const messages = {
           options: {
             pending: "Leave as pending",
             closed: "Close ticket",
+            transfer: "Transfer to queue",
           },
+          transferQueueLabel: "Transfer to queue",
         },
         IgnoreGroupMessages: {
           title: "Ignore Group Messages",

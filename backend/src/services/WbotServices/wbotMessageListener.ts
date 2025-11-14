@@ -1119,6 +1119,57 @@ export const startQueue = async (
       !isNil(currentSchedule) &&
       (!currentSchedule || currentSchedule.inActivity === false)
     ) {
+      // evitar loop de transferência
+      if (outOfHoursCache.get(`ooh-transferred-${ticket.id}`)) {
+        outOfHoursCache.set(`ticket-${ticket.id}`, true);
+        const outOfHoursMessage =
+          queue.outOfHoursMessage?.trim() ||
+          "Estamos fora do horário de expediente";
+        const sentMessage = await wbot.sendMessage(getJidOf(ticket), {
+          text: formatBody(outOfHoursMessage, ticket)
+        });
+        await verifyMessage(sentMessage, ticket, contact);
+        const outOfHoursAction = await GetCompanySetting(
+          companyId,
+          "outOfHoursAction",
+          "pending"
+        );
+        await UpdateTicketService({
+          ticketData: {
+            queueId: queue.id,
+            chatbot: false,
+            status: outOfHoursAction
+          },
+          ticketId: ticket.id,
+          companyId: ticket.companyId
+        });
+        return;
+      }
+
+      const outOfHoursAction = await GetCompanySetting(
+        companyId,
+        "outOfHoursAction",
+        "pending"
+      );
+
+      if (outOfHoursAction === "transfer") {
+        const targetId = await GetCompanySetting(
+          companyId,
+          "outOfHoursTransferQueueId",
+          "0"
+        );
+        const targetQueueId = Number(targetId);
+        if (targetQueueId && targetQueueId !== queue.id) {
+          const targetQueue = await Queue.findByPk(targetQueueId);
+          if (targetQueue) {
+            // marca que já transferimos uma vez para evitar ciclos
+            outOfHoursCache.set(`ooh-transferred-${ticket.id}`, true);
+            await startQueue(wbot, ticket, targetQueue, false);
+            return;
+          }
+        }
+      }
+
       outOfHoursCache.set(`ticket-${ticket.id}`, true);
       const outOfHoursMessage =
         queue.outOfHoursMessage?.trim() ||
@@ -1127,11 +1178,6 @@ export const startQueue = async (
         text: formatBody(outOfHoursMessage, ticket)
       });
       await verifyMessage(sentMessage, ticket, contact);
-      const outOfHoursAction = await GetCompanySetting(
-        companyId,
-        "outOfHoursAction",
-        "pending"
-      );
       await UpdateTicketService({
         ticketData: {
           queueId: queue.id,
@@ -1803,6 +1849,28 @@ const handleMessage = async (
             !isNil(currentSchedule) &&
             (!currentSchedule || currentSchedule.inActivity === false)
           ) {
+            // Se a ação for transferir, tentar transferir para fila configurada
+            if (outOfHoursAction === "transfer") {
+              const targetId = await GetCompanySetting(
+                companyId,
+                "outOfHoursTransferQueueId",
+                "0"
+              );
+              const targetQueueId = Number(targetId);
+              if (
+                targetQueueId &&
+                targetQueueId !== ticket.queueId &&
+                !outOfHoursCache.get(`ooh-transferred-${ticket.id}`)
+              ) {
+                const targetQueue = await Queue.findByPk(targetQueueId);
+                if (targetQueue) {
+                  outOfHoursCache.set(`ooh-transferred-${ticket.id}`, true);
+                  await startQueue(wbot, ticket, targetQueue, false);
+                  return;
+                }
+              }
+            }
+
             if (!avoidResend) {
               outOfHoursCache.set(`ticket-${ticket.id}`, true);
               const outOfHoursMessage =

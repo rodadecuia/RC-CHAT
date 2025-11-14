@@ -861,7 +861,9 @@ const messages = {
           options: {
             pending: "Deixar como pendente",
             closed: "Fechar ticket",
+            transfer: "Transferir para fila",
           },
+          transferQueueLabel: "Transferir para fila",
         },
         IgnoreGroupMessages: {
           title: "Ignorar Mensagens de Grupos",
