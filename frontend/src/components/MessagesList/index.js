@@ -1319,7 +1319,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
   };
         
   const renderMessages = () => {
-    const viewMessagesList = messagesList.map((message, index) => {
+    const viewMessagesList = messagesList.filter(message => !message.isPrivate).map((message, index) => {
       if (message.mediaType === "reactionMessage") {
         return;
       }

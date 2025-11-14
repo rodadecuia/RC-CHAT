@@ -20,6 +20,8 @@ import { _t } from "../TranslationServices/i18nService";
 import WhmcsService from "../WhmcsServices/WhmcsService";
 import Message from "../../models/Message";
 import Contact from "../../models/Contact";
+import CreatePrivateMessageService from "../MessageServices/CreatePrivateMessageService";
+import ShowUserService from "../UserServices/ShowUserService";
 
 export interface UpdateTicketData {
   status?: string;
@@ -77,6 +79,65 @@ export function websocketUpdateTicket(ticket: Ticket, moreChannels?: string[]) {
   ioStack.emit(`company-${ticket.companyId}-ticket`, {
     action: "update",
     ticket
+  });
+}
+
+async function logPrivateChange({
+  ticket,
+  oldUserId,
+  oldQueueId,
+  oldStatus,
+  companyId,
+  actorUserId,
+}: {
+  ticket: Ticket;
+  oldUserId?: number;
+  oldQueueId?: number | null;
+  oldStatus: string;
+  companyId: number;
+  actorUserId?: number;
+}) {
+  const changedAssignee = oldUserId !== ticket.userId;
+  const changedQueue = oldQueueId !== ticket.queueId;
+  const isClosedNow = oldStatus !== "closed" && ticket.status === "closed";
+  const isReopenedNow = oldStatus === "closed" && ticket.status === "open";
+
+  if (!(changedAssignee || changedQueue || isClosedNow || isReopenedNow)) return;
+
+  const [oldUser, newUser] = await Promise.all([
+    oldUserId ? ShowUserService(oldUserId) : null,
+    ticket.userId ? ShowUserService(ticket.userId) : null
+  ]);
+
+  const [oldQueue, newQueue] = await Promise.all([
+    oldQueueId ? Queue.findByPk(oldQueueId) : null,
+    ticket.queueId ? Queue.findByPk(ticket.queueId) : null
+  ]);
+
+  const actionUser = actorUserId ? await ShowUserService(actorUserId) : null;
+  const actorName = actionUser?.name || "Usuário desconhecido";
+
+  const header = isClosedNow
+    ? `*Chamado fechado por:* *${actorName}*`
+    : isReopenedNow
+      ? `*Chamado reaberto por:* *${actorName}*`
+      : `*Chamado transferido por:* *${actorName}*`;
+
+  const detalhes = [
+    changedQueue
+      ? `🏷️ *Fila:* ${oldQueue?.name || "Sem fila"} ➜ ${newQueue?.name || "Sem fila"}`
+      : "",
+    changedAssignee
+      ? `👤 *Atendente:* ${oldUser?.name || "Sem atendente"} ➜ ${newUser?.name || "Sem atendente"}`
+      : "",
+    `🕒 *${moment().format("DD/MM/YYYY HH:mm:ss")}*`
+  ].filter(Boolean).join("\n");
+
+  const logMsg = `${header}\n${detalhes}`;
+
+  await CreatePrivateMessageService({
+    messageData: { ticketId: ticket.id, body: logMsg, fromMe: true },
+    companyId
   });
 }
 
@@ -309,37 +370,22 @@ const UpdateTicketService = async ({
       ticketTraking.chatbotendAt = moment().toDate();
     }
 
-    const newLog = [];
-
-    if (userId && userId !== oldUserId) {
-      const action = oldUserId ? "transfer" : "attended";
-      const user = await User.findByPk(userId);
-      newLog.push({
-        userId: user.id,
-        username: user.name,
-        action,
-        timestamp: new Date(),
-      });
-    }
-
-    if (queueId && queueId !== oldQueueId) {
-      const user = await User.findByPk(reqUserId);
-      newLog.push({
-        userId: user.id,
-        username: user.name,
-        action: "queue_transfer",
-        timestamp: new Date(),
-      });
-    }
-
     await ticket.update({
       status,
       queueId,
       userId,
       whatsappId: ticket.whatsappId,
       chatbot,
-      queueOptionId,
-      log: ticket.log ? [...ticket.log, ...newLog] : newLog,
+      queueOptionId
+    });
+
+    await logPrivateChange({
+      ticket,
+      oldUserId,
+      oldQueueId,
+      oldStatus,
+      companyId,
+      actorUserId: reqUserId
     });
 
     if (oldStatus !== status) {

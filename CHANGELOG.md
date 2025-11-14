@@ -41,6 +41,21 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
+### 🗓️ 2024-11-14 11:00:00 - Log de Auditoria de Tickets e Melhorias de Login
+
+#### 🚀 Novas Funcionalidades
+
+-   **Log de Auditoria de Tickets com Mensagens Privadas:**
+    -   Implementado um sistema de log de auditoria que registra as principais ações em um ticket (transferência de fila/atendente, fechamento e reabertura) como mensagens privadas.
+    -   Essas mensagens são visíveis apenas na interface do sistema e não são enviadas ao cliente, garantindo um histórico detalhado e confidencial das ações.
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+-   **Login de Usuários Existentes:**
+    -   Corrigido um problema que fazia com que usuários já cadastrados no RC-CHAT recebessem uma mensagem de "cliente não encontrado" ao tentar fazer login. O sistema agora retorna a mensagem de erro correta (ex: "senha inválida") se o login normal falhar.
+-   **Validação de Senha no Login WHMCS:**
+    -   A validação da senha do produto no login via WHMCS foi aprimorada para ignorar espaços em branco, evitando falhas de autenticação.
+
 ### 🗓️ 2024-11-14 10:00:00 - Melhorias na Reabertura de Tickets e Integração WHMCS
 
 #### 🚀 Novas Funcionalidades

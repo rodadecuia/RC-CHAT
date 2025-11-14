@@ -84,6 +84,10 @@ class Message extends Model {
   @Column
   isEdited: boolean;
 
+  @Default(false)
+  @Column
+  isPrivate: boolean;
+
   @CreatedAt
   @Column(DataType.DATE(6))
   createdAt: Date;
