@@ -104,6 +104,22 @@ export const removeWbot = async (
 
 const checkWbotDuplicity = new Mutex();
 
+<<<<<<< Updated upstream
+=======
+const getProjectWAVersion = async () => {
+  try {
+    const res = await fetch(
+      "https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/backend/src/waversion.json"
+    );
+    const version = await res.json();
+    return version;
+  } catch (error) {
+    logger.warn("Failed to get current WA Version from project repository");
+  }
+  return waVersion;
+};
+
+>>>>>>> Stashed changes
 export const initWASocket = async (
   whatsapp: Whatsapp,
   proxy?: Agent,

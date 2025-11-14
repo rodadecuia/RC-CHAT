@@ -28,7 +28,11 @@ Conecte-se ao seu servidor via SSH e baixe o script de instalação com o seguin
 
 ```sh
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 curl -sSLO https://raw.githubusercontent.com/rodadecuia/RC-CHAT/main/install/setup.sh
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- [opções] <host_frontend> <email>
+>>>>>>> Stashed changes
 =======
 curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- [opções] <host_frontend> <email>
 >>>>>>> Stashed changes
@@ -40,8 +44,12 @@ Dê permissão de execução ao script e rode-o com `sudo`. O script irá inicia
 
 ```sh
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 chmod +x setup.sh
 sudo ./setup.sh
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 =======
 curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- rc-chat.meudominio.com admin@meudominio.com
 >>>>>>> Stashed changes
@@ -64,7 +72,11 @@ Basta executar o mesmo comando no seu servidor (não é necessário baixar o scr
 
 ```sh
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 sudo ./setup.sh
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --beta rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 =======
 curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --beta rc-chat.meudominio.com admin@meudominio.com
 >>>>>>> Stashed changes
@@ -79,7 +91,11 @@ Você pode usar flags para mudar a versão ou a origem das imagens durante uma a
 **Exemplo 1: Mudar para a versão Beta**
 ```sh
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 sudo ./setup.sh --beta
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --dockerhub rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 =======
 curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --dockerhub rc-chat.meudominio.com admin@meudominio.com
 >>>>>>> Stashed changes
@@ -88,7 +104,11 @@ curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/se
 **Exemplo 2: Mudar para usar imagens do Docker Hub**
 ```sh
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 sudo ./setup.sh --dockerhub
+=======
+curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
+>>>>>>> Stashed changes
 =======
 curl -sSL https://raw.githubusercontent.com/rodadecuia/RC-CHAT/stable/install/setup.sh | sudo bash -s -- --beta --dockerhub rc-chat.meudominio.com admin@meudominio.com
 >>>>>>> Stashed changes
