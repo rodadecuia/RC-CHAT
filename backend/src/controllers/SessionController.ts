@@ -20,6 +20,7 @@ import CreateCompanyService from "../services/CompanyService/CreateCompanyServic
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
+  let originalError: Error | null = null;
 
   try {
     // --- TENTATIVA 1: LOGIN NORMAL (OPERADORES, ADMINS) ---
@@ -49,6 +50,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     });
 
   } catch (err) {
+    originalError = err;
     // Se o login normal falhar, não retorna erro ainda.
     logger.warn(`Normal login failed for ${email}. Attempting WHMCS fallback...`);
 
@@ -154,7 +156,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     } catch (whmcsErr) {
       // Se o fallback do WHMCS também falhar, agora sim retornamos o erro.
       logger.warn({ err: whmcsErr.message }, `WHMCS fallback failed for ${email}.`);
-      throw new AppError("ERR_INVALID_CREDENTIALS", 401);
+      throw originalError || new AppError("ERR_INVALID_CREDENTIALS", 401);
     }
   }
 };
