@@ -64,7 +64,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
         // Obter detalhes do cliente no WHMCS para o nome da empresa
         const clientDetails = await getClientDetails(clientId);
-        const companyName = clientDetails?.companyname || clientDetails?.firstname + " " + clientDetails?.lastname || `WHMCS Client ${clientId}`;
+        const companyName = (clientDetails?.companyname?.trim())
+          ? clientDetails.companyname.trim()
+          : `${clientDetails?.firstname} ${clientDetails?.lastname}`.trim() || `WHMCS Client ${clientId}`;
 
         // Encontrar o plano correspondente no RC-CHAT
         const plan = await Plan.findOne({ where: { whmcsProductId } });
