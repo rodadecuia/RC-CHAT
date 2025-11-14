@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.npm \
 # Stage 2: Create the final image without source files
 FROM ghcr.io/ticketz-oss/node
 
-ARG TICKETZ_REGISTRY_URL
+ARG RC_CHAT_REGISTRY_URL
 
 WORKDIR /usr/src/app
 
@@ -29,7 +29,7 @@ RUN chmod +x ./scripts/load-retrieved.sh
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV TICKETZ_REGISTRY_URL=${TICKETZ_REGISTRY_URL}
+ENV RC_CHAT_REGISTRY_URL=${RC_CHAT_REGISTRY_URL}
 
 EXPOSE 3000
 

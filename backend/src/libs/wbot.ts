@@ -226,7 +226,7 @@ export const initWASocket = async (
         };
 
         const appName =
-          (await GetPublicSettingService({ key: "appName" })) || "Ticketz";
+          (await GetPublicSettingService({ key: "appName" })) || "RC Chat";
         const hostName = process.env.BACKEND_URL?.split("/")[2];
         const appVersion = (GitInfo as any).tagName || GitInfo.commitHash;
         const clientName = `${appName} ${appVersion}${

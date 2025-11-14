@@ -1,10 +1,10 @@
 {
     "Servers": {
         "1": {
-            "Name": "Ticketz Postgres",
+            "Name": "RC Chat Postgres",
             "Group": "Servers",
             "Port": 5432,
-            "Username": "ticketz",
+            "Username": "rc_chat",
             "Host": "postgres",
             "SSLMode": "prefer",
             "MaintenanceDB": "postgres"

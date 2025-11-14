@@ -163,7 +163,7 @@ export const getBodyMessage = (msg: proto.IMessage): string | null => {
       contactMessage:
         msg?.contactMessage?.vcard &&
         JSON.stringify({
-          ticketzvCard: [
+          rcChatvCard: [
             {
               displayName: msg.contactMessage.displayName,
               vcard: msg.contactMessage.vcard
@@ -173,7 +173,7 @@ export const getBodyMessage = (msg: proto.IMessage): string | null => {
       contactsArrayMessage:
         msg?.contactsArrayMessage &&
         JSON.stringify({
-          ticketzvCard: msg.contactsArrayMessage.contacts
+          rcChatvCard: msg.contactsArrayMessage.contacts
         }),
       locationMessage: msgLocationBody(msg?.locationMessage),
       liveLocationMessage: `Latitude: ${msg?.liveLocationMessage?.degreesLatitude} - Longitude: ${msg?.liveLocationMessage?.degreesLongitude}`,
@@ -705,7 +705,6 @@ export const verifyMediaMessage = async (
     fromMe: msg.key.fromMe,
     read: msg.key.fromMe,
     mediaUrl,
-    mediaType,
     thumbnailUrl,
     quotedMsgId: quotedMsg?.id,
     ack: msg.status || 0,

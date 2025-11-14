@@ -9,6 +9,7 @@ import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
 
 // ICONS
 import GroupAddIcon from "@material-ui/icons/GroupAdd";
@@ -38,7 +39,7 @@ import { SmallPie } from "./SmallPie";
 import { TicketCountersChart } from "./TicketCountersChart";
 import { getTimezoneOffset } from "../../helpers/getTimezoneOffset.js";
 
-import TicketzRegistry from "../../components/TicketzRegistry";
+import RcChatRegistry from "../../components/RcChatRegistry";
 import { copyToClipboard } from "../../helpers/copyToClipboard.js";
 import api from "../../services/api.js";
 import { SocketContext } from "../../context/Socket/SocketContext.js";
@@ -59,23 +60,7 @@ const useStyles = makeStyles((theme) => ({
     overflowY: "auto",
     ...theme.scrollbarStyles,
   },
-  pixkey: {
-    fontSize: "9pt",
-  },
-  paymentimg: {
-    maxWidth: "75%",
-    marginTop: 10,
-  },
-  paymentpix: {
-    maxWidth: "100%",
-    maxHeight: 130,
-    padding: "5px",
-    backgroundColor: "white",
-    borderColor: "black",
-    borderStyle: "solid",
-    borderWidth: "2px",
-  },
-  supportPaper: {
+  licensingPaper: {
     padding: theme.spacing(2),
     display: "flex",
     flexDirection: "column",
@@ -85,7 +70,7 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.secondary.contrastText,
     ...theme.scrollbarStyles,
   },
-  supportBox: {
+  licensingBox: {
     backgroundColor: theme.palette.secondary.light,
     borderRadius: "10px",
     textAlign: "center",
@@ -154,17 +139,17 @@ const useStyles = makeStyles((theme) => ({
     position: "sticky",
     right: 0,
   },
-  ticketzProPaper: {
+  rcChatProPaper: {
     padding: theme.spacing(2),
     display: "flex",
     flexDirection: "column",
     overflowY: "auto",
     minHeight: 300,
-    backgroundColor: theme.palette.ticketzproad.main,
-    color: theme.palette.ticketzproad.contrastText,
+    backgroundColor: theme.palette.rcproad.main,
+    color: theme.palette.rcproad.contrastText,
     ...theme.scrollbarStyles,
   },
-  ticketzRegistryPaper: {
+  rcChatRegistryPaper: {
     padding: theme.spacing(2),
     display: "flex",
     flexDirection: "column",
@@ -177,22 +162,22 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: "1em",
     ...theme.scrollbarStyles,
   },
-  ticketzProBox: {
+  rcChatProBox: {
     textAlign: "center",
     alignContent: "center"
   },
-  ticketzProTitle: {
+  rcChatProTitle: {
     fontWeight: "bold"
   },
-  ticketzProScreen: {
+  rcChatProScreen: {
     maxHeight: "300px",
     maxWidth: "100%"
   },
-  ticketzProFeatures: {
+  rcChatProFeatures: {
     padding: 0,
     listStyleType: "none"
   },
-  ticketzProCommand: {
+  rcChatProCommand: {
     fontFamily: "monospace",
     backgroundColor: "#00000080"
   },
@@ -276,8 +261,8 @@ const Dashboard = () => {
   const [dateTo, setDateTo] = useState(moment().format("YYYY-MM-DDTHH") + ":59");
   const { getCurrentUserInfo } = useAuth();
     
-  const [supportPix, setSupportPix] = useState(false);
-  const [supportIsBr, setSupportIsBr] = useState(false);
+  const [license, setLicense] = useState({});
+  const [licenseKey, setLicenseKey] = useState("");
   const [registered, setRegistered] = useState(false);
   const [proInstructionsOpen, setProInstructionsOpen] = useState(false);
   
@@ -308,18 +293,13 @@ const Dashboard = () => {
       return;
     }
     
-    window.open("https://pro.ticke.tz", "_blank");
+    window.open("https://painel.rodadecuia.com.br/store/licencas-de-softwares/rc-chat-pro", "_blank");
   }
   
   useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(res => res.json())
-      .then(data => {
-        if (data.country === 'BR') {
-          setSupportPix(true);
-          setSupportIsBr(true);
-        }
-      });
+    api.get("/license").then(res => {
+      setLicense(res.data);
+    });
   }, []);
   
   useEffect(() => {
@@ -346,7 +326,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(async () => {
-    const registry = await api.get("/ticketz/registry");
+    const registry = await api.get("/rc-chat/registry");
 
     setRegistered( registry?.data?.disabled || !!(registry?.data?.whatsapp ) );
   }, []);
@@ -357,6 +337,17 @@ const Dashboard = () => {
   
   async function handleChangePeriod(value) {
     setPeriod(value);
+  }
+
+  async function handleSaveLicense() {
+    try {
+      await api.post("/license", { licenseKey });
+      toast.success("Licença salva com sucesso!");
+      const res = await api.get("/license");
+      setLicense(res.data);
+    } catch (err) {
+      toast.error("Erro ao salvar a licença.");
+    }
   }
 
   async function updateStatus() {
@@ -567,75 +558,63 @@ const Dashboard = () => {
               <>
               <Grid item xs={12}>
                 {!registered &&
-                  <Paper className={classes.ticketzRegistryPaper}>
-                    <TicketzRegistry onRegister={setRegistered} />
+                  <Paper className={classes.rcChatRegistryPaper}>
+                    <RcChatRegistry onRegister={setRegistered} />
                   </Paper>
                 }
               </Grid>
               <Grid item lg={8} sm={12}>
-                <Paper className={clsx(classes.ticketzProPaper, {
+                <Paper className={clsx(classes.rcChatProPaper, {
                   [classes.clickpointer]: !proInstructionsOpen,
                 })} onClick={() => showProInstructions()}>
                   <Grid container justifyContent="flex-end">
-                    <Grid className={classes.ticketzProBox} item xs={12} md={proInstructionsOpen ? 4 : 6} sm={12}>
+                    <Grid className={classes.rcChatProBox} item xs={12} md={proInstructionsOpen ? 4 : 6} sm={12}>
                       <div>
-                        <img className={classes.ticketzProScreen} src="https://pro.ticke.tz/images/0/7/3/0/b/0730b234af7b4b0dac72d09828863bb7cb9193ea-ticketz-computador.png" />
+                        <img className={classes.rcChatProScreen} src="https://painel.rodadecuia.com.br/images/0/7/3/0/b/0730b234af7b4b0dac72d09828863bb7cb9193ea-rc-chat-computador.png" />
                       </div>
                     </Grid>
                     { !proInstructionsOpen &&
-                    <Grid className={classes.ticketzProBox} item xs={12} md={6} sm={12}>
-                      <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
-                        Ticketz PRO
+                    <Grid className={classes.rcChatProBox} item xs={12} md={6} sm={12}>
+                      <Typography className={classes.rcChatProTitle} component="h3" variant="h5" gutterBottom>
+                        RC Chat Pro
                       </Typography>
                       <Typography component="h4" variant="h7" gutterBottom>
-                      <ul className={classes.ticketzProFeatures}>
-                        <li>Whatsapp Oficial - Instagram - Messenger e outros</li>
-                        <li>Features exclusivas</li>
-                        <li>Suporte Avançado</li>
-                        <li>Migração Facilitada</li>
+                      <ul className={classes.rcChatProFeatures}>
+                        <li>Multi Conexões e funções exclusivas</li>
+                        <li>Suporte prioritário</li>
+                        <li>Sem limitações de funções e recursos</li>
                       </ul>
                       </Typography>
                       <Typography component="h3" variant="h5">
-                        Assine por R$ 199/mês
+                        Assine por R$ 99,90/mês
                       </Typography>
-                      <Typography component="h3" variant="h7" gutterBottom>
-                        direto dentro do sistema
-                      </Typography>
-                      { gitinfo.commitHash && 
-                      <Typography component="h4" variant="h6">
-                        Clique para instruções de Upgrade
-                      </Typography>
-                      }
-                      { !gitinfo.commitHash && 
-                      <Typography component="h3" variant="h5">
-                        Clique para visitar o site!
-                      </Typography>
-                      }
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => window.open("https://painel.rodadecuia.com.br/store/licencas-de-softwares/rc-chat-pro", "_blank")}
+                      >
+                        Realize o Upgrade
+                      </Button>
                     </Grid>
                     }
                     { proInstructionsOpen &&
-                    <Grid className={classes.ticketzProBox} item xs={12} md={8} sm={12}>
-                      <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
+                    <Grid className={classes.rcChatProBox} item xs={12} md={8} sm={12}>
+                      <Typography className={classes.rcChatProTitle} component="h3" variant="h5" gutterBottom>
                         Instruções de Upgrade
                       </Typography>
                       <Typography paragraph>
-                        Se você instalou as imagens disponibilizadas pelo projeto em um
-                        servidor ou VPS utilizando as instruções facilitadas tudo o que
-                        você precisa fazer é acessar seu servidor e digitar o comando abaixo:
-                      </Typography>
-                      <Typography className={classes.ticketzProCommand} paragraph>
-                        curl -sSL update.ticke.tz | sudo bash -s pro
+                        Se você instalou as imagens disponibilizadas pelo projeto em um servidor ou VPS utilizando as instruções facilitadas, tudo o que você precisa fazer é acessar sua área do cliente no link abaixo:
                       </Typography>
                       <Typography paragraph>
-                        Em instantes o Ticketz PRO estará instalado com todos os teus dados,
-                        agora só precisa ir até o menu de usuário, clicar em "Assinatura do
-                        Ticketz PRO" e fazer a sua assinatura.
+                        <a href="https://painel.rodadecuia.com.br/clientarea.php?action=services" target="_blank" rel="noopener noreferrer">
+                          https://painel.rodadecuia.com.br/clientarea.php?action=services
+                        </a>
                       </Typography>
                       <Typography paragraph>
-                        Se a tua instalação for diferente ou acredita que precisa
-                        de auxílio para instalar o Ticketz
-                        Pro, <a href="https://wa.me/554935670707"> entre
-                        em contato</a> que nós ajudamos!
+                        Pegue a chave de licença conforme o serviço contratado, adicione no campo indicado e pronto, o RC Chat PRO estará ativado.
+                      </Typography>
+                      <Typography paragraph>
+                        Se a tua instalação for diferente ou acredita que precisa de auxílio para instalar o RC Chat Pro, entre em contato que nós ajudamos!
                       </Typography>
                     </Grid>
                     }
@@ -650,60 +629,42 @@ const Dashboard = () => {
             user={currentUser}
             yes={() => (
               <Grid item lg={4} sm={12}>
-                <Paper className={classes.supportPaper}>
+                <Paper className={classes.licensingPaper}>
                   <Typography style={{ overflow: "hidden" }} component="h2" variant="h6" gutterBottom>
-                    {i18n.t("ticketz.support.title")}
+                    Informações de licenciamento
                   </Typography>
-                    <Grid container justifyContent="flex-end">
-                      <Grid className={classes.supportBox} style={{maxHeight: supportPix ? 300 : 35} } item xs={12}>
-                        <Typography
-                          className={classes.clickpointer}
-                          component="h3" variant="h6"
-                          gutterBottom onClick={() => setSupportPix(true)}>
-                          PIX
-                        </Typography>
-                        <div
-                          className={classes.clickpointer}
-                          onClick={() => {
-                            copyToClipboard("1ab11506-9480-4303-8e1e-988e7c49ed4d");
-                            toast.success("Chave PIX copiada");
-                          }
-                          }>
-                          <div>
-                            <img className={classes.paymentpix} src="/ticketzpix.png" />
-                          </div>
-                          <Typography className={classes.pixkey} component="body2" paragraph>
-                            Clique para copiar a chave PIX
-                          </Typography>
-                        </div>
-                      </Grid>
-                      <Grid className={classes.supportBox}  style={{maxHeight: supportPix ? 35 : 300 }} item xs={12} onClick={() => setSupportPix(false)}>
-                        <Typography
-                          className={classes.clickpointer}
-                          component="h3" variant="h6"
-                          gutterBottom onClick={() => setSupportPix(true)}>
-                          {i18n.t("ticketz.support.mercadopagotitle")}
-                        </Typography>
-                        { supportPix || <> 
-                        {supportIsBr && <>
-                          <Typography component="body2" paragraph>
-                            {i18n.t("ticketz.support.recurringbrl")}
-                          </Typography>
-                          <div><a href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c9380848f1b8ed1018f2b011f90061f" target="_blank">
-                            <img className={classes.paymentimg} src="/mercadopago.png" />
-                          </a></div>
-                        </>}
-                        {!supportIsBr && <>
-                          <Typography component="body2" paragraph>
-                            {i18n.t("ticketz.support.international")}
-                          </Typography>
-                          <div><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X6XHVCPMRQEL4" target="_blank">
-                            <img className={classes.paymentimg} src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" />
-                          </a></div>
-                        </>}
-                        </> }
-                      </Grid>
+                  <Grid container spacing={1}>
+                    <Grid item xs={12}>
+                      <Typography>Status: {license.status}</Typography>
                     </Grid>
+                    <Grid item xs={12}>
+                      <Typography>Validade: {license.expiry}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography>Tipo: {license.type}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography>Próxima renovação: {license.nextRenewal}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Chave de licença"
+                        value={licenseKey}
+                        onChange={(e) => setLicenseKey(e.target.value)}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSaveLicense}
+                        fullWidth
+                      >
+                        Salvar
+                      </Button>
+                    </Grid>
+                  </Grid>
                 </Paper>
               </Grid>
             )} /> }
