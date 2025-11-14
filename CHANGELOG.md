@@ -41,6 +41,14 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
+### 🗓️ 2024-11-14 13:30:00 - Correções de Build e Banco de Dados
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+-   **Formato de Número em Planos:** Corrigido um erro no backend que impedia a criação ou atualização de planos com valores decimais separados por vírgula (ex: "33,85"). O sistema agora converte automaticamente a vírgula para ponto antes de salvar no banco de dados.
+-   **Build para ARM64:** Restaurada a flag `--no-cache sharp` no `frontend/Dockerfile` para corrigir o erro `qemu: uncaught target signal 4 (Illegal instruction)` que ocorria ao compilar a imagem para a arquitetura ARM64.
+-   **Criação de Empresa:** Corrigido um erro no `CreateCompanyService` que causava uma falha de compilação (`Cannot find name 'campaignsEnabled'`) ao criar uma nova empresa.
+
 ### 🗓️ 2024-11-14 12:00:00 - Melhorias na Associação de Empresas e Segurança
 
 #### 🚀 Novas Funcionalidades
