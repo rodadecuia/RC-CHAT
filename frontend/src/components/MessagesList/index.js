@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useRef, useContext } from "react";
+import React, { useState, useEffect, useReducer, useRef, useContext, useCallback } from "react";
 
 import { isSameDay, parseISO, format } from "date-fns";
 import clsx from "clsx";
@@ -610,7 +610,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
 
   const socketManager = useContext(SocketContext);
 
-  function loadData(incrementPage = false) {
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  const loadData = useCallback((incrementPage = false) => {
     setLoading(true);
     const thisPageNumber = incrementPage ? pageNumber + 1 : 1;
     const delayDebounceFn = setTimeout(() => {
@@ -627,7 +633,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
             setLoading(false);
           }
 
-          if (pageNumber === 1 && data.messages.length > 1) {
+          if (thisPageNumber === 1 && data.messages.length > 1) {
             scrollToBottom();
           }
         } catch (err) {
@@ -641,7 +647,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
     return () => {
       clearTimeout(delayDebounceFn);
     };
-  }
+  }, [ticketId, markAsRead, pageNumber, scrollToBottom]);
 
   useEffect(async () => {
     dispatch({ type: "RESET" });
@@ -652,7 +658,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
     await loadPageMutex.runExclusive(async () => {
       loadData();
     });
-  }, [ticketId]);
+  }, [ticketId, loadData]);
 
   useEffect(() => {
     if (!ticket.id) {
@@ -704,13 +710,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
     return () => {
       socket.disconnect();
     };
-  }, [ticketId, ticket, socketManager]);
+  }, [ticketId, ticket, socketManager, scrollToBottom]);
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     await loadPageMutex.runExclusive(async () => {
       loadData(true);
     });
-  };
+  }, [loadData]);
 
   const handleScroll = (e) => {
     if (!hasMore) return;
@@ -792,7 +798,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, allowReplyButtons
             src={message.mediaUrl}
             controls
           />
-          <div className={[clsx({
+          <div className={clsx({
             [classes.textContentItemDeleted]: message.isDeleted,
             [classes.textContentItem]: !message.isDeleted,
           }),]}>
