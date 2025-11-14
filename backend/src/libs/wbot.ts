@@ -8,7 +8,8 @@ import makeWASocket, {
   WAMessageContent,
   proto,
   jidNormalizedUser,
-  BinaryNode
+  BinaryNode,
+  WAVersion
 } from "libzapitu-rf";
 
 import { Boom } from "@hapi/boom";
@@ -124,7 +125,7 @@ export const initWASocket = async (
 
         const isLegacy = provider === "stable";
 
-        const version = waVersion;
+        const version = waVersion as WAVersion;
 
         logger.info(`using WA v${version.join(".")}`);
         logger.info(`isLegacy: ${isLegacy}`);
@@ -227,7 +228,7 @@ export const initWASocket = async (
         const appName =
           (await GetPublicSettingService({ key: "appName" })) || "Ticketz";
         const hostName = process.env.BACKEND_URL?.split("/")[2];
-        const appVersion = GitInfo.tagName || GitInfo.commitHash;
+        const appVersion = (GitInfo as any).tagName || GitInfo.commitHash;
         const clientName = `${appName} ${appVersion}${
           hostName ? ` - ${hostName}` : ""
         }`;
