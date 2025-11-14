@@ -12,9 +12,11 @@ import { createAccessToken, createRefreshToken } from "../helpers/CreateTokens";
 import Company from "../models/Company";
 import Setting from "../models/Setting";
 import Translation from "../models/Translation";
-import { validateClientProductLogin } from "../services/WhmcsService";
+import { validateClientProductLogin, getClientDetails } from "../services/WhmcsService"; // Importar getClientDetails
 import { logger } from "../utils/logger";
 import Plan from "../models/Plan";
+import CreateUserService from "../services/UserServices/CreateUserService"; // Importar CreateUserService
+import CreateCompanyService from "../services/CompanyService/CreateCompanyService"; // Importar CreateCompanyService
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
@@ -54,30 +56,61 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       // --- TENTATIVA 2: FALLBACK PARA LOGIN VIA WHMCS (CLIENTE FINAL) ---
       const { clientId, productId: whmcsProductId } = await validateClientProductLogin(email, password);
 
-      // Encontrar a empresa no RC-CHAT correspondente ao clientId do WHMCS
-      const company = await Company.findOne({ where: { whmcsClientId: clientId } });
+      let company = await Company.findOne({ where: { whmcsClientId: clientId } });
+      let user: User;
+
       if (!company) {
-        throw new AppError("WHMCS client found, but no matching company in RC-CHAT.", 404);
+        logger.info(`[WHMCS] Company not found for client ID: ${clientId}. Attempting to create new company.`);
+
+        // Obter detalhes do cliente no WHMCS para o nome da empresa
+        const clientDetails = await getClientDetails(clientId);
+        const companyName = clientDetails?.companyname || clientDetails?.firstname + " " + clientDetails?.lastname || `WHMCS Client ${clientId}`;
+
+        // Encontrar o plano correspondente no RC-CHAT
+        const plan = await Plan.findOne({ where: { whmcsProductId } });
+        if (!plan) {
+          throw new AppError(`[WHMCS] Product ID ${whmcsProductId} not mapped to any plan in RC-CHAT.`, 404);
+        }
+
+        // Criar a nova empresa no RC-CHAT
+        company = await CreateCompanyService({
+          name: companyName,
+          id: undefined, // O ID será auto-incrementado
+          planId: plan.id,
+          whmcsClientId: clientId,
+          // Outros campos padrão para a empresa, se houver
+        });
+        logger.info(`[WHMCS] New company '${company.name}' created with ID: ${company.id} and WHMCS Client ID: ${company.whmcsClientId}`);
+
+        // Criar um usuário administrador padrão para a nova empresa
+        user = await CreateUserService({
+          name: "Admin WHMCS", // Nome padrão para o admin da empresa WHMCS
+          email: email, // Usar o email do WHMCS como email do admin
+          password: Math.random().toString(36).substring(2, 15), // Gerar uma senha aleatória
+          profile: "admin",
+          companyId: company.id,
+        });
+        logger.info(`[WHMCS] Admin user '${user.email}' created for new company ID: ${company.id}`);
+
+      } else {
+        // Se a empresa já existe, sincronizar o plano e encontrar o usuário admin
+        const plan = await Plan.findOne({ where: { whmcsProductId } });
+        if (plan && company.planId !== plan.id) {
+          logger.info(`[WHMCS] Syncing plan for company ${company.id}. Old: ${company.planId}, New: ${plan.id}`);
+          company.planId = plan.id;
+          await company.save();
+        }
+
+        user = await User.findOne({
+          where: { companyId: company.id, profile: "admin" },
+          order: [["createdAt", "ASC"]]
+        });
+        if (!user) {
+          throw new AppError(`[WHMCS] Company ${company.id} found, but no admin user configured.`, 404);
+        }
       }
 
-      // Sincronizar o plano
-      const plan = await Plan.findOne({ where: { whmcsProductId } });
-      if (plan && company.planId !== plan.id) {
-        logger.info(`Syncing plan for company ${company.id}. Old: ${company.planId}, New: ${plan.id}`);
-        company.planId = plan.id;
-        await company.save();
-      }
-
-      // Encontrar o usuário admin daquela empresa
-      const user = await User.findOne({
-        where: { companyId: company.id, profile: "admin" },
-        order: [["createdAt", "ASC"]]
-      });
-      if (!user) {
-        throw new AppError("Company found, but no admin user configured.", 404);
-      }
-
-      // Gerar a sessão para o usuário admin encontrado
+      // Gerar a sessão para o usuário admin encontrado ou recém-criado
       const token = createAccessToken(user);
       const refreshToken = createRefreshToken(user);
       const serializedUser = await SerializeUser(user);

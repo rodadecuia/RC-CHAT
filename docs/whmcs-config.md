@@ -8,6 +8,7 @@ A integração permite que o RC-CHAT:
 1.  **Automatize o Status do Cliente:** Ative, suspenda ou cancele o acesso de um cliente no RC-CHAT com base no status do serviço dele no WHMCS.
 2.  **Login Unificado (SSO):** Permita que seus clientes façam login no RC-CHAT usando o e-mail e a senha do **produto/serviço** que eles contrataram no WHMCS.
 3.  **Sincronize Planos:** Garanta que o plano do cliente no RC-CHAT corresponda sempre ao plano que ele pagou no WHMCS.
+4.  **Criação Automática de Empresas:** Se um cliente WHMCS tentar fazer login e a empresa correspondente ainda não existir no RC-CHAT, o sistema a criará automaticamente.
 
 ## Passo 1: Configuração no RC-CHAT (`.env`)
 
@@ -75,8 +76,10 @@ Para que o login unificado funcione, você precisa garantir que:
     -   O RC-CHAT usará o **e-mail do cliente** como nome de usuário e a **senha definida neste campo** para autenticação.
     -   Certifique-se de que seus clientes saibam qual senha usar.
 
-2.  **O `whmcsClientId` esteja no RC-CHAT:**
-    -   No painel de administrador do RC-CHAT, ao editar uma `Company` (Empresa), há um campo chamado **"WHMCS Client ID"**.
-    -   Este campo **precisa ser preenchido** com o ID do cliente correspondente no WHMCS para que o login funcione.
+2.  **Criação Automática de Empresas no RC-CHAT:**
+    -   Com a nova funcionalidade, se um cliente WHMCS tentar fazer login e a empresa correspondente ainda não existir no RC-CHAT, o sistema a criará automaticamente.
+    -   O nome da empresa será obtido dos detalhes do cliente no WHMCS.
+    -   Um usuário administrador padrão será criado para essa nova empresa, usando o e-mail do cliente WHMCS e uma senha aleatória.
+    -   O plano da empresa será associado com base no "ID do Produto no WHMCS" configurado nos planos do RC-CHAT.
 
 Com essas configurações, seu sistema estará totalmente integrado, automatizando o gerenciamento de clientes e simplificando a experiência de login.

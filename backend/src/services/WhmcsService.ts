@@ -14,17 +14,28 @@ async function callWhmcsApi(action: string, params: any): Promise<any> {
   };
 
   try {
-    const response = await axios.post(process.env.WHMCS_API_URL, apiConfig, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    // WHMCS espera receber os parâmetros como application/x-www-form-urlencoded.
+    // Enviar JSON aqui pode causar 403/401 dependendo da configuração do servidor.
+    const formBody = new URLSearchParams(apiConfig as Record<string, string>);
+
+    const response = await axios.post(process.env.WHMCS_API_URL, formBody, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json"
+      },
+      // Evita ficar travado caso a API esteja indisponível
+      timeout: 15000
     });
 
     if (response.data.result === "error") {
       throw new Error(response.data.message || "Unknown WHMCS API error");
     }
     return response.data;
-  } catch (error) {
-    logger.error({ err: error.message }, "WHMCS API call failed");
-    throw new Error(`WHMCS API Error: ${error.message}`);
+  } catch (error: any) {
+    const status = error?.response?.status;
+    const msg = error?.response?.data?.message || error?.message || "Unknown error";
+    logger.error({ err: msg, status }, "WHMCS API call failed");
+    throw new Error(`WHMCS API Error: ${msg}${status ? ` (HTTP ${status})` : ""}`);
   }
 }
 

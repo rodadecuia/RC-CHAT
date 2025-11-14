@@ -41,80 +41,20 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
-### 🚀 Novas Funcionalidades
+### 🗓️ 2024-11-13 22:30:00 - Automação de Criação de Empresas WHMCS
 
-#### Log de Auditoria de Tickets
-- **Histórico Detalhado por Ticket:** Implementado um sistema de log que registra todas as ações importantes em um ticket, incluindo:
-    - Atendimento inicial pelo operador.
-    - Todas as transferências entre operadores e filas.
-    - Envio de mensagens pelo atendente.
-- **Acesso Restrito:** O histórico do ticket é visível apenas para administradores, garantindo a confidencialidade das informações.
+#### 🚀 Novas Funcionalidades
 
-#### Melhorias na Dashboard
-- **Relatório de Satisfação do Cliente (CSAT):** Adicionado um novo conjunto de relatórios para analisar a satisfação do cliente:
-    - **Nota Média Geral:** Um card com a nota média de todas as avaliações.
-    - **Distribuição de Notas:** Um gráfico de pizza que mostra a porcentagem de cada nota (de 1 a 5 estrelas).
-    - **Performance por Atendente:** Uma tabela que exibe a nota média de cada atendente.
-- **Ranking de Contatos:** Adicionado um novo relatório que exibe um ranking dos contatos com mais tickets, ajudando a identificar os clientes mais ativos.
+- **Criação Automática de Empresas WHMCS:** Implementada a funcionalidade de criação automática de empresas no RC-CHAT. Quando um cliente WHMCS tenta fazer login pela primeira vez e a empresa correspondente ainda não existe no RC-CHAT, o sistema agora:
+    - Obtém os detalhes do cliente (nome da empresa) diretamente do WHMCS.
+    - Encontra um plano no RC-CHAT que corresponda ao `whmcsProductId` do serviço contratado pelo cliente.
+    - Cria automaticamente a nova empresa no RC-CHAT, associando-a ao `whmcsClientId` do WHMCS e ao `planId` correto.
+    - Cria um usuário administrador padrão para a nova empresa, utilizando o e-mail do cliente WHMCS e uma senha aleatória.
+    - Realiza o login do usuário na empresa recém-criada.
 
-#### Integração Avançada com WHMCS
+### 🗓️ 2024-11-13 21:30:00 - Correções e Melhorias Adicionais
 
--   **Login Unificado (SSO) para Clientes Finais:** Implementado um sistema de autenticação inteligente. Agora, a tela de login principal do RC-CHAT permite a autenticação de duas formas:
-    1.  **Operadores:** Fazem login com suas credenciais normais do RC-CHAT.
-    2.  **Clientes Finais (Donos de Empresas):** Fazem login usando o **e-mail** da sua conta WHMCS e a **senha do produto/serviço** específico do RC-CHAT, que eles podem consultar na área do cliente do WHMCS.
--   **Sincronização Automática de Planos:** A cada login de um cliente via WHMCS, o sistema agora verifica o produto/serviço ativo no WHMCS e sincroniza o plano da empresa no RC-CHAT para garantir que corresponda ao que foi pago.
--   **Mapeamento de Planos:** Adicionada a capacidade de mapear diretamente os "Planos" do RC-CHAT aos "Produtos" do WHMCS através da coluna `whmcsProductId`, tornando a integração flexível para múltiplos planos.
--   **Estrutura para Webhooks:** O backend agora está preparado para receber webhooks do WHMCS, permitindo a automação de ativação, suspensão e cancelamento de contas com base em eventos de faturamento.
-
-### 🛠️ Instalação e Deploy (Setup)
-
--   **Script de Instalação Interativo (`setup.sh`):** O processo de instalação foi completamente redesenhado.
-    -   **Detecção Automática:** O script agora detecta se é uma **nova instalação** ou uma **atualização**.
-    -   **Assistente de Instalação:** Em uma nova instalação, o script inicia um assistente interativo que guia o usuário na configuração de domínios, e-mail, versão e origem das imagens.
-    -   **Atualizações Simplificadas:** Para atualizar, o usuário só precisa executar `sudo ./setup.sh` novamente. O script lê as configurações existentes e atualiza o sistema de forma não destrutiva.
--   **Diretório de Instalação Padrão:** A instalação agora é centralizada em `/opt/rc-chat`, mantendo o sistema de arquivos do servidor organizado.
--   **Limpeza Pós-Instalação:** O script agora mantém o diretório de instalação limpo, preservando apenas os arquivos essenciais: `docker-compose.yml`, `.env`, `setup.sh` e o diretório `backups/`.
--   **Instalação de Dependências:** O script agora verifica e instala automaticamente o `git` se ele não estiver presente no servidor.
-
-### 🔄 CI/CD (Build e Publicação)
-
--   **Suporte a Múltiplos Registros:** O workflow do GitHub Actions agora envia as imagens Docker tanto para o **GitHub Container Registry (GHCR)** quanto para o **Docker Hub**.
--   **Estratégia de Tags Simplificada:** A geração de tags foi alinhada com a estratégia de deploy:
-    -   Commits na branch `main` geram a tag Docker `latest`.
-    -   Commits na branch `beta` geram a tag Docker `beta`.
--   **Versionamento por Commit:** A informação de versão exibida na interface foi alterada para usar o **nome da branch** e o **hash do commit** (ex: `main @ fa64e63`), removendo a dependência de tags Git para versionamento.
-
-### 🐞 Correções de Erros (Bug Fixes)
-
-- **Autenticação via Token:** Corrigido o middleware de autenticação de token para garantir que o envio de mensagens via API funcione corretamente.
-- **Importação de Contatos:** Desativada a importação automática de contatos ao conectar uma nova conta do WhatsApp, mantendo apenas a importação manual.
-- **Exibição do Ícone Wavoip:** Ajustada a lógica de verificação para garantir que o ícone de chamada de voz (`wavoip`) seja exibido corretamente, mesmo em ambientes de desenvolvimento sem `https`.
-- **WHMCS Product ID em Planos:** Corrigido o salvamento e associação do `whmcsProductId` nos planos.
--   **Erro 502 Bad Gateway (Múltiplas Causas):**
-    -   **Conflito de Rede:** Corrigido o `docker-compose.yml` para garantir que o `nginx-proxy` e o `frontend` estejam na mesma rede Docker, permitindo a comunicação.
-    -   **Conflito de Configuração:** Resolvido um problema onde o `nginx-proxy` detectava incorretamente o container do `backend` como um host virtual, causando um balanceamento de carga incorreto.
-    -   **Arquivo de Configuração Faltando:** Corrigido o `setup.sh` para garantir que o diretório `confs/` do Nginx seja copiado para o diretório de instalação, resolvendo erros de montagem de volume.
--   **Falha no Build da Imagem `arm64`:**
-    -   Corrigido o erro `qemu: uncaught target signal 4 (Illegal instruction)` no `frontend/Dockerfile` adicionando a flag `--no-cache sharp` ao comando `npm ci`.
--   **Falhas de Migração do Banco de Dados:**
-    -   Corrigido o erro `column "whmcsClientId" does not exist` (e erros similares) criando os arquivos de migração **TypeScript (`.ts`)** necessários para adicionar as colunas `whmcsClientId`, `whmcsTicketId` e `whmcsProductId` às tabelas `Companies`, `Contacts`, `Tickets` e `Plans`.
-    -   Corrigido o `backend/Dockerfile` para que o comando `db:migrate` aponte para o caminho correto das migrações compiladas (`dist/database/migrations`).
--   **Falha na Execução do Script de Instalação:**
-    -   Corrigido o erro `fatal: not a git repository` garantindo que o `git` seja instalado antes de ser usado.
-    -   Corrigido o erro `Permission denied` em scripts internos adicionando `RUN chmod +x` aos `Dockerfiles` correspondentes.
--   **Branding e Consistência:**
-    -   Corrigido o prefixo dos logs do backend de `[ticketz]` para `[rc-chat]`.
-
-### 📚 Documentação
-
--   **`README.md`:**
-    -   O arquivo foi completamente reescrito para focar no público de língua portuguesa.
-    -   As instruções de instalação foram atualizadas para refletir o novo processo interativo de 2 passos (`curl` para baixar, `sudo ./setup.sh` para executar).
--   **`docs/whmcs-config.md`:**
-    -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.
-
-### 🗓️ 2024-07-31 15:30:00 - Correções e Melhorias Adicionais
-
+- **Correção de sintaxe no MessagesList/index.js:** Resolvido erro de sintaxe na linha 804 do componente `MessagesList`, garantindo a correta renderização das mensagens.
 - **Ordenação alfabética da lista de conexões**
 - **Atualização do componente de renderização de mensagens "React Whatsmarked"**
 - **Exibição de nomes mencionados em grupos**
@@ -127,3 +67,83 @@ Esta seção resume as novas funcionalidades e melhorias implementadas recenteme
 - **Refatoração da lógica de carregamento de países** e adição da função `getCountryes` para exportação.
 - **Integração do contexto Formik** no componente `PhoneNumberInput`.
 - **Uso do componente `PhoneNumberInput`** para o campo de número de telefone no `ContactModal`.
+
+### 🗓️ 2024-11-13 21:00:00 - Implementação de Log de Auditoria e Melhorias na Dashboard
+
+#### 🚀 Novas Funcionalidades
+
+- **Log de Auditoria de Tickets:**
+    - **Histórico Detalhado por Ticket:** Implementado um sistema de log que registra todas as ações importantes em um ticket, incluindo:
+        - Atendimento inicial pelo operador.
+        - Todas as transferências entre operadores e filas.
+        - Envio de mensagens pelo atendente.
+    - **Acesso Restrito:** O histórico do ticket é visível apenas para administradores, garantindo a confidencialidade das informações.
+
+- **Melhorias na Dashboard:**
+    - **Relatório de Satisfação do Cliente (CSAT):** Adicionado um novo conjunto de relatórios para analisar a satisfação do cliente:
+        - **Nota Média Geral:** Um card com a nota média de todas as avaliações.
+        - **Distribuição de Notas:** Um gráfico de pizza que mostra a porcentagem de cada nota (de 1 a 5 estrelas).
+        - **Performance por Atendente:** Uma tabela que exibe a nota média de cada atendente.
+    - **Ranking de Contatos:** Adicionado um novo relatório que exibe um ranking dos contatos com mais tickets, ajudando a identificar os clientes mais ativos.
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+- **WHMCS Product ID em Planos:** Corrigido o salvamento e associação do `whmcsProductId` nos planos.
+- **Exibição do Ícone Wavoip:** Ajustada a lógica de verificação para garantir que o ícone de chamada de voz (`wavoip`) seja exibido corretamente, mesmo em ambientes de desenvolvimento sem `https`.
+- **Importação de Contatos:** Desativada a importação automática de contatos ao conectar uma nova conta do WhatsApp, mantendo apenas a importação manual.
+- **Autenticação via Token:** Corrigido o middleware de autenticação de token para garantir que o envio de mensagens via API funcione corretamente.
+
+### 🗓️ 2024-07-31 15:30:00 - Integração Avançada com WHMCS e Melhorias de Deploy
+
+#### 🚀 Novas Funcionalidades
+
+- **Integração Avançada com WHMCS:**
+    - **Login Unificado (SSO) para Clientes Finais:** Implementado um sistema de autenticação inteligente. Agora, a tela de login principal do RC-CHAT permite a autenticação de duas formas:
+        1.  **Operadores:** Fazem login com suas credenciais normais do RC-CHAT.
+        2.  **Clientes Finais (Donos de Empresas):** Fazem login usando o **e-mail** da sua conta WHMCS e a **senha do produto/serviço** específico do RC-CHAT, que eles podem consultar na área do cliente do WHMCS.
+    - **Sincronização Automática de Planos:** A cada login de um cliente via WHMCS, o sistema agora verifica o produto/serviço ativo no WHMCS e sincroniza o plano da empresa no RC-CHAT para garantir que corresponda ao que foi pago.
+    - **Mapeamento de Planos:** Adicionada a capacidade de mapear diretamente os "Planos" do RC-CHAT aos "Produtos" do WHMCS através da coluna `whmcsProductId`, tornando a integração flexível para múltiplos planos.
+    - **Estrutura para Webhooks:** O backend agora está preparado para receber webhooks do WHMCS, permitindo a automação de ativação, suspensão e cancelamento de contas com base em eventos de faturamento.
+
+#### 🛠️ Instalação e Deploy (Setup)
+
+-   **Script de Instalação Interativo (`setup.sh`):** O processo de instalação foi completamente redesenhado.
+    -   **Detecção Automática:** O script agora detecta se é uma **nova instalação** ou uma **atualização**.
+    -   **Assistente de Instalação:** Em uma nova instalação, o script inicia um assistente interativo que guia o usuário na configuração de domínios, e-mail, versão e origem das imagens.
+    -   **Atualizações Simplificadas:** Para atualizar, o usuário só precisa executar `sudo ./setup.sh` novamente. O script lê as configurações existentes e atualiza o sistema de forma não destrutiva.
+-   **Diretório de Instalação Padrão:** A instalação agora é centralizada em `/opt/rc-chat`, mantendo o sistema de arquivos do servidor organizado.
+-   **Limpeza Pós-Instalação:** O script agora mantém o diretório de instalação limpo, preservando apenas os arquivos essenciais: `docker-compose.yml`, `.env`, `setup.sh` e o diretório `backups/`.
+-   **Instalação de Dependências:** O script agora verifica e instala automaticamente o `git` se ele não estiver presente no servidor.
+
+#### 🔄 CI/CD (Build e Publicação)
+
+-   **Suporte a Múltiplos Registros:** O workflow do GitHub Actions agora envia as imagens Docker tanto para o **GitHub Container Registry (GHCR)** quanto para o **Docker Hub**.
+-   **Estratégia de Tags Simplificada:** A geração de tags foi alinhada com a estratégia de deploy:
+    -   Commits na branch `main` geram a tag Docker `latest`.
+    -   Commits na branch `beta` geram a tag Docker `beta`.
+-   **Versionamento por Commit:** A informação de versão exibida na interface foi alterada para usar o **nome da branch** e o **hash do commit** (ex: `main @ fa64e63`), removendo a dependência de tags Git para versionamento.
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+-   **Erro 502 Bad Gateway (Múltiplas Causas):**
+    -   **Conflito de Rede:** Corrigido o `docker-compose.yml` para garantir que o `nginx-proxy` e o `frontend` estejam na mesma rede Docker, permitindo a comunicação.
+    -   **Conflito de Configuração:** Resolvido um problema onde o `nginx-proxy` detectava incorretamente o container do `backend` como um host virtual, causando um balanceamento de carga incorreto.
+    -   **Arquivo de Configuração Faltando:** Corrigido o `setup.sh` para garantir que o diretório `confs/` do Nginx seja copido para o diretório de instalação, resolvendo erros de montagem de volume.
+-   **Falha no Build da Imagem `arm64`:**
+    -   Corrigido o erro `qemu: uncaught target signal 4 (Illegal instruction)` no `frontend/Dockerfile` adicionando a flag `--no-cache sharp` ao comando `npm ci`.
+-   **Falhas de Migração do Banco de Dados:**
+    -   Corrigido o erro `column "whmcsClientId" does not exist` (e erros similares) criando os arquivos de migração **TypeScript (`.ts`)** necessários para adicionar as colunas `whmcsClientId`, `whmcsTicketId` e `whmcsProductId` às tabelas `Companies`, `Contacts`, `Tickets` e `Plans`.
+    -   Corrigido o `backend/Dockerfile` para que o comando `db:migrate` aponte para o caminho correto das migrações compiladas (`dist/database/migrations`).
+-   **Falha na Execução do Script de Instalação:**
+    -   Corrigido o erro `fatal: not a git repository` garantindo que o `git` seja instalado antes de ser usado.
+    -   Corrigido o erro `Permission denied` em scripts internos adicionando `RUN chmod +x` aos `Dockerfiles` correspondentes.
+-   **Branding e Consistência:**
+    -   Corrigido o prefixo dos logs do backend de `[ticketz]` para `[rc-chat]`.
+
+#### 📚 Documentação
+
+-   **`README.md`:**
+    -   O arquivo foi completamente reescrito para focar no público de língua portuguesa.
+    -   As instruções de instalação foram atualizadas para refletir o novo processo interativo de 2 passos (`curl` para baixar, `sudo ./setup.sh` para executar).
+-   **`docs/whmcs-config.md`:**
+    -   Criado um novo guia detalhado explicando passo a passo como configurar a integração com o WHMCS, incluindo a configuração de API, mapeamento de planos e webhooks.
