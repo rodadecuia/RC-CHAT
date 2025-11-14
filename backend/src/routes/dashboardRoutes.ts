@@ -47,4 +47,20 @@ routes.get(
   DashboardController.contactsReport
 );
 
+// Nova rota para obter informações de ativação do sistema
+routes.get(
+  "/dashboard/activation-info",
+  isAuth,
+  isAdmin, // Apenas administradores devem poder ver/configurar isso
+  DashboardController.getActivationInfo
+);
+
+// Nova rota para atualizar informações de ativação do sistema
+routes.put(
+  "/dashboard/activation-info",
+  isAuth,
+  isAdmin, // Apenas administradores devem poder configurar isso
+  DashboardController.updateActivationInfo
+);
+
 export default routes;
