@@ -28,7 +28,8 @@ const CreateCompanyService = async (
     dueDate,
     recurrence,
     language,
-    whmcsClientId
+    whmcsClientId,
+    campaignsEnabled
   } = companyData;
 
   const companySchema = Yup.object().shape({
@@ -128,7 +129,7 @@ const CreateCompanyService = async (
     }
   });
 
-  if (companyData.campaignsEnabled !== undefined) {
+  if (campaignsEnabled !== undefined) {
     const [setting, settingCreated] = await Setting.findOrCreate({
       where: {
         companyId: company.id,
