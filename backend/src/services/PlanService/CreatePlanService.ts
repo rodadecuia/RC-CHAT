@@ -14,7 +14,7 @@ interface PlanData {
 }
 
 const CreatePlanService = async (planData: PlanData): Promise<Plan> => {
-  const { name } = planData;
+  const { name, value } = planData;
 
   const planSchema = Yup.object().shape({
     name: Yup.string()
@@ -42,7 +42,10 @@ const CreatePlanService = async (planData: PlanData): Promise<Plan> => {
     throw new AppError(err.message);
   }
 
-  const plan = await Plan.create(planData);
+  const plan = await Plan.create({
+    ...planData,
+    value: String(value).includes(",") ? +String(value).replace(",", ".") : value,
+  });
 
   return plan;
 };

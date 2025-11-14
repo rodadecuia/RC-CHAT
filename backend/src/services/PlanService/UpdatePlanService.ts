@@ -60,7 +60,7 @@ const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
     users,
     connections,
     queues,
-    value,
+    value: String(value).includes(",") ? +String(value).replace(",", ".") : value,
     currency,
     isPublic,
     whmcsProductId
