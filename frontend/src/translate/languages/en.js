@@ -996,6 +996,9 @@ const messages = {
             both: "Ticket and Contact"
           },
         },
+        whmcsTicketIntegration: {
+          title: "Connect ticket with WHMCS",
+        },
       },
       messagesList: {
         header: {

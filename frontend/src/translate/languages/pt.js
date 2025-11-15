@@ -1002,6 +1002,9 @@ const messages = {
             both: "Ticket e Contacto"
           },
         },
+        whmcsTicketIntegration: {
+          title: "Conectar ticket com WHMCS",
+        },
       },
       messagesList: {
         header: {

@@ -149,7 +149,10 @@ const UpdateTicketService = async ({
   dontRunChatbot
 }: Request): Promise<Response> => {
   try {
+    logger.debug(`UpdateTicketService: Starting for ticketId ${ticketId} with data ${JSON.stringify(ticketData)}`);
+
     if (!companyId && !reqUserId) {
+      logger.error("UpdateTicketService: Missing reqUserId or companyId");
       throw new Error("Need reqUserId or companyId");
     }
 
@@ -157,6 +160,7 @@ const UpdateTicketService = async ({
 
     if (reqUserId) {
       if (!user) {
+        logger.error(`UpdateTicketService: User not found for reqUserId ${reqUserId}`);
         throw new AppError("User not found", 404);
       }
       companyId = user.companyId;
@@ -176,38 +180,54 @@ const UpdateTicketService = async ({
       "disabled"
     );
 
+    const whmcsTicketIntegrationEnabled = await GetCompanySetting(
+      companyId,
+      "whmcsTicketIntegrationEnabled",
+      "disabled"
+    );
+
+    logger.debug(`UpdateTicketService: Fetching ticket ${ticketId}`);
     const ticket = await ShowTicketService(ticketId, companyId);
+    logger.debug(`UpdateTicketService: Ticket fetched: ${ticket.id}`);
+
     const isGroup = ticket.contact?.isGroup || ticket.isGroup;
 
     if (queueId && queueId !== ticket.queueId) {
       const newQueue = await Queue.findByPk(queueId);
       if (!newQueue) {
+        logger.error(`UpdateTicketService: Queue not found for queueId ${queueId}`);
         throw new AppError("Queue not found", 404);
       }
       if (newQueue.companyId !== ticket.companyId) {
+        logger.error(`UpdateTicketService: Queue ${queueId} does not belong to company ${ticket.companyId}`);
         throw new AppError("Queue does not belong to the same company", 403);
       }
     }
 
     if (user && ticket.status !== "pending") {
       if (user.profile !== "admin" && ticket.userId !== user.id) {
+        logger.warn(`UpdateTicketService: User ${user.id} tried to update ticket ${ticket.id} without permission.`);
         throw new AppError("ERR_FORBIDDEN", 403);
       }
     }
 
+    logger.debug(`UpdateTicketService: Finding or creating ticket tracking for ticket ${ticketId}`);
     const ticketTraking = await FindOrCreateATicketTrakingService({
       ticketId,
       companyId,
       whatsappId: ticket.whatsappId
     });
+    logger.debug(`UpdateTicketService: Ticket tracking processed.`);
 
     if (ticket.channel === "whatsapp" && status === "open") {
       try {
+        logger.debug(`UpdateTicketService: Setting messages as read for ticket ${ticketId}`);
         await SetTicketMessagesAsRead(ticket);
+        logger.debug(`UpdateTicketService: Messages set as read for ticket ${ticketId}`);
       } catch (err) {
         logger.error(
           { ticketId, message: err?.message },
-          "Could not set messages as read."
+          "UpdateTicketService: Could not set messages as read."
         );
       }
     }
@@ -220,25 +240,31 @@ const UpdateTicketService = async ({
     if (!oldQueueId && userId && oldStatus === "pending" && status === "open") {
       const acceptUser = await User.findByPk(userId);
       if (acceptUser.profile !== "admin") {
+        logger.warn(`UpdateTicketService: Non-admin user ${userId} tried to accept pending ticket ${ticketId} without queue.`);
         throw new AppError("ERR_NO_PERMISSION", 403);
       }
     }
 
     if (oldStatus === "closed") {
+      logger.debug(`UpdateTicketService: Checking contact open tickets for contact ${ticket.contactId}`);
       await CheckContactOpenTickets(ticket.contactId, ticket.whatsappId);
+      logger.debug(`UpdateTicketService: Contact open tickets checked.`);
       chatbot = null;
       queueOptionId = null;
     }
 
     if (status !== undefined && ["closed"].indexOf(status) > -1) {
+      logger.debug(`UpdateTicketService: Closing ticket ${ticketId}. WHMCS integration check.`);
       // Início da Integração WHMCS para Fechamento
-      if (ticket.whmcsTicketId && ticket.contact.whmcsClientId) {
+      if (whmcsTicketIntegrationEnabled === "enabled" && ticket.whmcsTicketId && ticket.contact.whmcsClientId) {
         try {
+          logger.debug(`UpdateTicketService: Fetching messages for WHMCS integration for ticket ${ticketId}`);
           const messages = await Message.findAll({
             where: { ticketId: ticket.id },
             order: [["createdAt", "ASC"]],
             include: [{ model: Contact, as: "contact" }]
           });
+          logger.debug(`UpdateTicketService: Messages fetched for WHMCS integration.`);
 
           const conversationLog = messages
             .map(msg => {
@@ -248,26 +274,31 @@ const UpdateTicketService = async ({
             })
             .join("\n\n---------------------------------\n\n");
 
+          logger.debug(`UpdateTicketService: Sending AddTicketReply to WHMCS for ticket ${ticket.whmcsTicketId}`);
           await WhmcsService.execute({
             action: "AddTicketReply",
             ticketid: ticket.whmcsTicketId,
             clientid: ticket.contact.whmcsClientId,
             message: `Conversa do RC-CHAT:\n\n${conversationLog}`
           });
+          logger.debug(`UpdateTicketService: AddTicketReply sent to WHMCS.`);
 
+          logger.debug(`UpdateTicketService: Sending UpdateTicket to WHMCS for ticket ${ticket.whmcsTicketId}`);
           await WhmcsService.execute({
             action: "UpdateTicket",
             ticketid: ticket.whmcsTicketId,
             status: "Closed"
           });
+          logger.debug(`UpdateTicketService: UpdateTicket sent to WHMCS.`);
 
           logger.info(`Ticket do WHMCS ${ticket.whmcsTicketId} fechado e atualizado com a conversa.`);
-        } catch (error) {
-          logger.error({ err: error }, "Falha ao fechar ticket no WHMCS.");
+        } catch (error: any) { // Explicitly type error as 'any'
+          logger.error({ err: error, ticketId }, "UpdateTicketService: Falha ao fechar ticket no WHMCS.");
           // Não lança erro para não impedir o fechamento no RC-CHAT
+          logger.error(`UpdateTicketService: WHMCS Integration Error for ticket ${ticketId}: ${error.message}`);
         }
       } else {
-        logger.warn(`WHMCS Ticket ID ou Client ID não encontrado para o ticket ${ticket.id}. Fechamento no WHMCS ignorado.`);
+        logger.warn(`UpdateTicketService: WHMCS Integration is disabled or Ticket ID/Client ID not found for ticket ${ticket.id}. Closing in WHMCS skipped.`);
       }
       // Fim da Integração WHMCS
 
@@ -296,7 +327,9 @@ const UpdateTicketService = async ({
             );
             const bodyRatingMessage = `${ratingTxt}\n\n*${rateInstructions}*\n\n${rateReturn}`;
 
+            logger.debug(`UpdateTicketService: Sending rating message for ticket ${ticketId}`);
             await SendWhatsAppMessage({ body: bodyRatingMessage, ticket });
+            logger.debug(`UpdateTicketService: Rating message sent.`);
           }
 
           ticketTraking.ratingAt = moment().toDate();
@@ -344,8 +377,9 @@ const UpdateTicketService = async ({
         );
 
         if (ticket.channel === "whatsapp" && !isGroup) {
+          logger.debug(`UpdateTicketService: Sending completion message for ticket ${ticketId}`);
           const sentMessage = await SendWhatsAppMessage({ body, ticket });
-
+          logger.debug(`UpdateTicketService: Completion message sent.`);
           await verifyMessage(sentMessage, ticket, ticket.contact);
         }
       }
@@ -370,6 +404,7 @@ const UpdateTicketService = async ({
       ticketTraking.chatbotendAt = moment().toDate();
     }
 
+    logger.debug(`UpdateTicketService: Updating ticket ${ticketId} in DB.`);
     await ticket.update({
       status,
       queueId,
@@ -378,7 +413,9 @@ const UpdateTicketService = async ({
       chatbot,
       queueOptionId
     });
+    logger.debug(`UpdateTicketService: Ticket ${ticketId} updated in DB.`);
 
+    logger.debug(`UpdateTicketService: Logging private change for ticket ${ticketId}`);
     await logPrivateChange({
       ticket,
       oldUserId,
@@ -387,20 +424,27 @@ const UpdateTicketService = async ({
       companyId,
       actorUserId: reqUserId
     });
+    logger.debug(`UpdateTicketService: Private change logged.`);
 
     if (oldStatus !== status) {
       if (oldStatus === "closed" && status === "open") {
+        logger.debug(`UpdateTicketService: Incrementing ticket-reopen counter for company ${companyId}`);
         await incrementCounter(companyId, "ticket-reopen");
       } else if (status === "open") {
+        logger.debug(`UpdateTicketService: Incrementing ticket-accept counter for company ${companyId}`);
         await incrementCounter(companyId, "ticket-accept");
       } else if (status === "closed") {
+        logger.debug(`UpdateTicketService: Incrementing ticket-close counter for company ${companyId}`);
         await incrementCounter(companyId, "ticket-close");
       } else if (status === "pending" && oldQueueId !== queueId) {
+        logger.debug(`UpdateTicketService: Incrementing ticket-transfer counter for company ${companyId}`);
         await incrementCounter(companyId, "ticket-transfer");
       }
     }
 
+    logger.debug(`UpdateTicketService: Reloading ticket ${ticketId}`);
     await ticket.reload();
+    logger.debug(`UpdateTicketService: Ticket ${ticketId} reloaded.`);
 
     status = ticket.status;
 
@@ -445,7 +489,9 @@ const UpdateTicketService = async ({
       );
     }
 
+    logger.debug(`UpdateTicketService: Saving ticket tracking for ticket ${ticketId}`);
     ticketTraking.save();
+    logger.debug(`UpdateTicketService: Ticket tracking saved.`);
 
     if (
       !dontRunChatbot &&
@@ -453,11 +499,13 @@ const UpdateTicketService = async ({
       ticket.queueId &&
       ticket.queueId !== oldQueueId
     ) {
+      logger.debug(`UpdateTicketService: Starting chatbot for ticket ${ticketId}`);
       const wbot = await GetTicketWbot(ticket);
       if (wbot) {
         await startQueue(wbot, ticket);
         await ticket.reload();
       }
+      logger.debug(`UpdateTicketService: Chatbot started for ticket ${ticketId}`);
     }
 
     if (
@@ -481,7 +529,9 @@ const UpdateTicketService = async ({
 
         if (acceptedMessage && ticket.whatsapp?.status === "CONNECTED") {
           const acceptUser = await User.findByPk(userId);
+          logger.debug(`UpdateTicketService: Sending accepted message for ticket ${ticketId}`);
           await sendFormattedMessage(acceptedMessage, ticket, acceptUser);
+          logger.debug(`UpdateTicketService: Accepted message sent.`);
           accepted = true;
         }
       }
@@ -502,7 +552,9 @@ const UpdateTicketService = async ({
           ticket.whatsapp.transferMessage || systemTransferMessage;
 
         if (transferMessage) {
+          logger.debug(`UpdateTicketService: Sending transfer message for ticket ${ticketId}`);
           await sendFormattedMessage(transferMessage, ticket);
+          logger.debug(`UpdateTicketService: Transfer message sent.`);
         }
       }
     }
@@ -525,18 +577,20 @@ const UpdateTicketService = async ({
         });
     }
 
+    logger.debug(`UpdateTicketService: Emitting websocket update for ticket ${ticketId}`);
     websocketUpdateTicket(ticket, [`user-${oldUserId}`]);
+    logger.debug(`UpdateTicketService: Websocket update emitted.`);
 
     return { ticket, oldStatus, oldUserId };
-  } catch (err) {
+  } catch (err: any) { // Explicitly type err as 'any'
     logger.error(
-      { error: err?.name, message: err?.message, stack: err?.stack },
-      "UpdateTicketService"
+      { error: err?.name, message: err?.message, stack: err?.stack, ticketId },
+      "UpdateTicketService: Unhandled error"
     );
     if (err instanceof AppError) {
       throw err;
     }
-    throw new AppError("Error updating ticket", 500);
+    throw new AppError(`Error updating ticket: ${err.message || "Unknown error"}`, 500);
   }
 };
 

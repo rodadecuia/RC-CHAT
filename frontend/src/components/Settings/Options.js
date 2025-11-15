@@ -139,6 +139,8 @@ export default function Options(props) {
   const [tagsMode, setTagsMode] = useState("ticket");
   const [ticketAcceptedMessage, setTicketAcceptedMessage] = useState("");
   const [transferMessage, setTransferMessage] = useState("");
+  const [whmcsTicketIntegrationEnabled, setWhmcsTicketIntegrationEnabled] = useState("disabled");
+
 
   const { getCurrentUserInfo } = useAuth();
   const [currentUser, setCurrentUser] = useState({});
@@ -273,6 +275,9 @@ export default function Options(props) {
 
       const reopenTicketToPreviousAgent = settings.find((s) => s.key === "reopenTicketToPreviousAgent");
       setReopenTicketToPreviousAgent(reopenTicketToPreviousAgent?.value || "disabled");
+
+      const whmcsTicketIntegrationEnabled = settings.find((s) => s.key === "whmcsTicketIntegrationEnabled");
+      setWhmcsTicketIntegrationEnabled(whmcsTicketIntegrationEnabled?.value || "disabled");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
@@ -417,6 +422,15 @@ export default function Options(props) {
     /*     if (typeof scheduleTypeChanged === "function") {
           scheduleTypeChanged(value);
         } */
+  }
+
+  async function handleWhmcsTicketIntegrationEnabled(value) {
+    setWhmcsTicketIntegrationEnabled(value);
+    await update({
+      key: "whmcsTicketIntegrationEnabled",
+      value,
+    });
+    i18nToast.success("settings.success");
   }
 
   return (
@@ -1030,6 +1044,24 @@ export default function Options(props) {
             >
               <MenuItem value="disabled">{i18n.t("common.disabled")}</MenuItem>
               <MenuItem value="enabled">{i18n.t("common.enabled")}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="whmcs-integration-label">
+              Conectar ticket com WHMCS
+            </InputLabel>
+            <Select
+              labelId="whmcs-integration-label"
+              value={whmcsTicketIntegrationEnabled}
+              onChange={async (e) => {
+                handleWhmcsTicketIntegrationEnabled(e.target.value);
+              }}
+            >
+              <MenuItem value={"disabled"}>Desativado</MenuItem>
+              <MenuItem value={"enabled"}>Ativado</MenuItem>
             </Select>
           </FormControl>
         </Grid>

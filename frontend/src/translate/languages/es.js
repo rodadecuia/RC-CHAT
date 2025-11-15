@@ -998,6 +998,9 @@ const messages = {
             both: "Ticket y contacto",
           },
         },
+        whmcsTicketIntegration: {
+          title: "Connect ticket with WHMCS",
+        },
       },
       messagesList: {
         header: {

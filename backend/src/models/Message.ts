@@ -104,8 +104,7 @@ class Message extends Model {
   quotedMsg: Message;
 
   @ForeignKey(() => Ticket)
-  @PrimaryKey
-  @Column
+  @Column // Removed @PrimaryKey from here
   ticketId: number;
 
   @BelongsTo(() => Ticket)
