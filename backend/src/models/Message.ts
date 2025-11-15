@@ -21,7 +21,7 @@ import { URLCharEncoder } from "../helpers/URLCharEncoder";
 @Table
 class Message extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.STRING, autoIncrement: false }) // Added autoIncrement: false
   id: string;
 
   @Column(DataType.STRING)
@@ -104,7 +104,7 @@ class Message extends Model {
   quotedMsg: Message;
 
   @ForeignKey(() => Ticket)
-  @Column // Removed @PrimaryKey from here
+  @Column
   ticketId: number;
 
   @BelongsTo(() => Ticket)

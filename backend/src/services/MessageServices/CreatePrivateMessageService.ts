@@ -67,7 +67,10 @@ const CreatePrivateMessageService = async ({
     return createdMessage;
 
   } catch (error: any) {
-    logger.error(`CreatePrivateMessageService: Caught error during message creation for ticketId ${messageData.ticketId}: ${error.message}`, { error });
+    logger.error(
+      { err: error, ticketId: messageData.ticketId },
+      `CreatePrivateMessageService: Caught error during message creation for ticketId ${messageData.ticketId}: ${error.message}. Stack: ${error.stack}`
+    );
     throw error;
   }
 };
