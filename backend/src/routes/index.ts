@@ -33,7 +33,6 @@ import rcChatOSSRoutes from "./rcChatOSSRoutes";
 import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import companyWhmcsRoutes from "./companyWhmcsRoutes";
-import whmcsWebhookRoutes from "./whmcsWebhookRoutes"; // Nova importação
 
 const routes = Router();
 
@@ -70,6 +69,5 @@ routes.use(rcChatOSSRoutes);
 routes.use(i18nRoutes);
 routes.use(wavoipRoutes);
 routes.use(companyWhmcsRoutes);
-routes.use(whmcsWebhookRoutes); // Uso da nova rota
 
 export default routes;

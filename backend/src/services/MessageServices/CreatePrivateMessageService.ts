@@ -1,7 +1,6 @@
 import { getIO } from "../../libs/socket";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
-import { v4 as uuidv4 } from "uuid";
 import { logger } from "../../utils/logger";
 
 interface MessageData {
@@ -25,36 +24,18 @@ const CreatePrivateMessageService = async ({
   messageData,
   companyId,
 }: Request): Promise<Message> => {
-  let messageId: string;
-  if (messageData.id && messageData.id.trim() !== "") {
-    messageId = messageData.id;
-  } else {
-    const generatedUuid = uuidv4();
-    logger.debug(`CreatePrivateMessageService: Generated UUID: ${generatedUuid}`);
-    messageId = generatedUuid;
-  }
-  logger.debug(`CreatePrivateMessageService: Final messageId: ${messageId} for ticketId: ${messageData.ticketId}`);
-
   try {
     const messageToCreate = {
       ...messageData,
-      id: messageId,
       companyId,
       isPrivate: true,
     };
 
-    logger.debug(`CreatePrivateMessageService: Data passed to Message.create: ${JSON.stringify(messageToCreate)}`);
-
     const createdMessage = await Message.create(messageToCreate);
 
-    logger.debug(`CreatePrivateMessageService: Result of Message.create: type=${typeof createdMessage}, value=${createdMessage}`);
-
     if (!createdMessage) {
-      logger.error(`CreatePrivateMessageService: Message.create returned null or undefined for messageId: ${messageId}. Throwing a specific error.`);
-      throw new Error(`Failed to create message: Message.create returned null/undefined for ID ${messageId}.`);
+      throw new Error("Failed to create message: Message.create returned null/undefined.");
     }
-
-    logger.debug(`CreatePrivateMessageService: Message successfully created with ID: ${createdMessage.id}`);
 
     const ticket = await Ticket.findByPk(messageData.ticketId);
 
@@ -69,7 +50,7 @@ const CreatePrivateMessageService = async ({
   } catch (error: any) {
     logger.error(
       { err: error, ticketId: messageData.ticketId },
-      `CreatePrivateMessageService: Caught error during message creation for ticketId ${messageData.ticketId}: ${error.message}. Stack: ${error.stack}`
+      `CreatePrivateMessageService: Caught error during message creation: ${error.message}. Stack: ${error.stack}`
     );
     throw error;
   }

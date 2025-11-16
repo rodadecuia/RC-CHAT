@@ -21,7 +21,11 @@ import { URLCharEncoder } from "../helpers/URLCharEncoder";
 @Table
 class Message extends Model {
   @PrimaryKey
-  @Column({ type: DataType.STRING, autoIncrement: false }) // Added autoIncrement: false
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+    allowNull: false,
+  })
   id: string;
 
   @Column(DataType.STRING)

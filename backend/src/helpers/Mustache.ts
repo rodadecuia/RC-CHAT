@@ -48,9 +48,11 @@ export function mustacheValues(
   const email = contact?.email || "{{email}}";
   const now = new Date();
   const protocol =
+    ticket?.whmcsTicketId ||
     (ticket &&
       `${now.toISOString().split("T")[0].replace(/-/g, "")}-${ticket.id}`) ||
     "{{protocol}}";
+  const whmcsTicketId = ticket?.whmcsTicketId || "{{whmcsTicketId}}";
   const time = now.toLocaleTimeString("en-GB", { hour12: false });
 
   let extraInfo: any;
@@ -72,6 +74,7 @@ export function mustacheValues(
     greeting,
     queue,
     protocol,
+    whmcsTicketId,
     user,
     time,
     ticket: ticket?.id || "{{ticket}}",
