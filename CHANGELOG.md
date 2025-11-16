@@ -41,6 +41,22 @@ Esta seção descreve o conjunto de funcionalidades principais da plataforma RC-
 
 Esta seção resume as novas funcionalidades e melhorias implementadas recentemente.
 
+### 🗓️ 2024-11-14 22:00:00 - Refatoração de Nomenclatura e Correções de Build
+
+#### 🚀 Novas Funcionalidades
+
+-   **Opção de Ativar/Desativar Integração WHMCS:** Adicionada uma nova opção nas configurações para permitir que o administrador ative ou desative a integração com o WHMCS. Isso evita erros em ambientes onde a integração não é usada.
+
+#### 🔄 Refatoração e Melhorias
+
+-   **Renomeação de "Ticketz" para "RC Chat":** Realizada uma refatoração completa no código-fonte para substituir a nomenclatura "Ticketz" por "RC Chat" em textos visíveis para o usuário, nomes de arquivos, rotas de API e outras referências internas.
+-   **Atualização de Dependências:** Atualizadas as dependências de `wavoip-api` e outras imagens Docker para usar os novos repositórios do projeto.
+
+#### 🐞 Correções de Erros (Bug Fixes)
+
+-   **Erro de Chave Primária em Mensagens:** Corrigido o erro `null value in column "id" of relation "Messages" violates not-null constraint` removendo a chave primária duplicada da coluna `ticketId` no modelo `Message.ts`, alinhando-o com a migração do banco de dados.
+-   **Erros de Compilação no Backend:** Resolvidos vários erros de compilação (`TypeError` e `TS2345`) nos serviços `CreatePrivateMessageService` e `UpdateTicketService`, garantindo que os logs de erro sejam tratados corretamente e que os objetos de mensagem sejam retornados conforme o esperado.
+
 ### 🗓️ 2024-11-14 13:30:00 - Correções de Build e Banco de Dados
 
 #### 🐞 Correções de Erros (Bug Fixes)
